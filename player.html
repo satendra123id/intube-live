@@ -1,21 +1,21 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intube - Player</title>
+    <title>Intube - Professional Player</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Roboto', Arial, sans-serif; margin: 0; background-color: #fff; }
-        .video-player { width: 100%; background: #000; aspect-ratio: 16/9; }
+        body { font-family: Roboto, Arial, sans-serif; margin: 0; background: #fff; }
+        .video-player { width: 100%; aspect-ratio: 16/9; background: #000; }
         .details { padding: 15px; }
-        .title { font-size: 18px; font-weight: bold; color: #0f0f0f; margin: 0 0 5px 0; }
+        .title { font-size: 18px; font-weight: 600; color: #0f0f0f; margin: 0 0 5px 0; }
         .stats { color: #606060; font-size: 14px; margin-bottom: 15px; }
         .actions { display: flex; gap: 10px; border-bottom: 1px solid #ddd; padding-bottom: 15px; }
-        .btn { cursor: pointer; padding: 10px 20px; background: #f2f2f2; border-radius: 20px; border: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 5px; }
-        .sub-btn { background: #0f0f0f; color: #fff; }
+        .btn { cursor: pointer; padding: 10px 20px; background: #f2f2f2; border-radius: 20px; border: none; font-weight: 600; }
+        .comment-section { margin-top: 20px; }
+        #commentInput { width: 80%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -24,63 +24,63 @@
     
     <div class="details">
         <h1 id="titleDisplay" class="title">Loading...</h1>
-        <p id="viewCount" class="stats">Loading views...</p>
+        <p id="viewCount" class="stats">Loading...</p>
         
         <div class="actions">
-            <button class="btn" onclick="updateLike()">👍 <span id="likeCount">0</span></button>
-            <button class="btn">Share</button>
-            <button class="btn sub-btn">Subscribe</button>
+            <button class="btn" onclick="toggleLike()">👍 Like</button>
+            <button class="btn" onclick="toggleSubscribe()">Subscribe</button>
+        </div>
+
+        <div class="comment-section">
+            <input type="text" id="commentInput" placeholder="Add a comment...">
+            <button onclick="postComment()" class="btn">Post</button>
+            <div id="commentsList"></div>
         </div>
     </div>
 
     <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
-            authDomain: "intube-ba578.firebaseapp.com",
-            projectId: "intube-ba578",
-            storageBucket: "intube-ba578.firebasestorage.app",
-            messagingSenderId: "862455398504",
-            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
-            measurementId: "G-944K8C4VM8"
-        };
+        const firebaseConfig = { /* Apna Config wahi rahega */ };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // URL se ID aur Title lena
         const urlParams = new URLSearchParams(window.location.search);
         const fileId = urlParams.get('id');
-        const videoTitle = urlParams.get('title');
-
-        document.getElementById('titleDisplay').innerText = videoTitle || "No Title";
-        document.getElementById('videoPlayer').src = 'https://intube-backend.onrender.com/stream/' + fileId;
-
-        // Database Reference
-        const videoRef = db.collection("videos").where("fileId", "==", fileId);
-
-        // Real-time Update (View Counter aur Like update)
-        videoRef.onSnapshot((snapshot) => {
-            snapshot.forEach((doc) => {
-                // View increment
-                if (doc.data().views !== undefined) {
-                    db.collection("videos").doc(doc.id).update({
-                        views: firebase.firestore.FieldValue.increment(1)
-                    });
-                }
-                
-                // UI update
-                document.getElementById('viewCount').innerText = doc.data().views + " views";
-                document.getElementById('likeCount').innerText = doc.data().likes || 0;
+        
+        // 1. UNIQUE VIEW LOGIC
+        if (!localStorage.getItem('viewed_' + fileId)) {
+            db.collection("videos").where("fileId", "==", fileId).get().then(snap => {
+                snap.forEach(doc => {
+                    doc.ref.update({ views: firebase.firestore.FieldValue.increment(1) });
+                });
             });
-        });
+            localStorage.setItem('viewed_' + fileId, 'true');
+        }
 
-        // Like button function
-        function updateLike() {
-            videoRef.get().then((snapshot) => {
-                snapshot.forEach((doc) => {
-                    db.collection("videos").doc(doc.id).update({
-                        likes: firebase.firestore.FieldValue.increment(1)
-                    });
+        // 2. TOGGLE LIKE LOGIC
+        function toggleLike() {
+            let liked = localStorage.getItem('liked_' + fileId);
+            db.collection("videos").where("fileId", "==", fileId).get().then(snap => {
+                snap.forEach(doc => {
+                    let increment = liked ? -1 : 1;
+                    doc.ref.update({ likes: firebase.firestore.FieldValue.increment(increment) });
+                    liked ? localStorage.removeItem('liked_' + fileId) : localStorage.setItem('liked_' + fileId, 'true');
+                });
+            });
+        }
+
+        // 3. SUBSCRIBE LOGIC
+        function toggleSubscribe() {
+            db.collection("channel_info").doc("myChannel").update({
+                subscribers: firebase.firestore.FieldValue.increment(1)
+            }).then(() => alert("Subscribed!"));
+        }
+
+        // 4. COMMENTS LOGIC
+        function postComment() {
+            let text = document.getElementById('commentInput').value;
+            db.collection("videos").where("fileId", "==", fileId).get().then(snap => {
+                snap.forEach(doc => {
+                    doc.ref.collection("comments").add({ text: text, timestamp: new Date() });
                 });
             });
         }
