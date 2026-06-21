@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-        body { font-family: 'Roboto', sans-serif; margin: 0; background: #f9f9f9; color: #0f0f0f;}
+        body { font-family: 'Roboto', sans-serif; margin: 0; background: #f2f2f2; color: #0f0f0f; padding-bottom: 20px;}
         
-        .fixed-player { width: 100%; aspect-ratio: 16/9; background: #000; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);}
+        .fixed-player { width: 100%; aspect-ratio: 16/9; background: #000; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
         .fixed-player video { width: 100%; height: 100%; object-fit: contain; }
 
         .content-info { padding: 12px 15px; background: #fff; border-bottom: 1px solid #e5e5e5; }
@@ -27,7 +27,7 @@
         .download-btn { background: #22c55e; color: #fff; border-color: #16a34a; font-weight: 700;}
         .download-btn svg { fill: #fff; }
 
-        .channel-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; border-bottom: 1px solid #e5e5e5; padding-bottom: 12px; margin-bottom: 15px; }
+        .channel-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; margin-bottom: 5px; }
         .channel-info { display: flex; align-items: center; gap: 12px;}
         .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden;}
         .channel-avatar img { width: 100%; height: 100%; object-fit: cover;}
@@ -36,7 +36,7 @@
         .sub-btn { background: #0f0f0f; color: white; border: none; padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;}
         .sub-btn.subscribed { background: #f2f2f2; color: #0f0f0f; font-weight: 400; }
 
-        .comments-section { padding: 0 15px; background: #fff; margin-top: 10px; border-radius: 8px 8px 0 0; }
+        .comments-section { padding: 0 15px; background: #fff; margin-top: 10px; }
         .comments-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e5e5e5; }
         .comments-header h3 { margin: 0; font-size: 16px; font-weight: 500; }
         .comment-input-box { display: flex; gap: 10px; margin: 15px 0 20px 0; }
@@ -46,6 +46,16 @@
         .comment-avatar { width: 34px; height: 34px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden;}
         .comment-user { font-weight: 500; font-size: 13px; color: #0f0f0f; margin-right: 8px;}
         .comment-text { font-size: 14px; color: #0f0f0f; margin: 4px 0 0 0; line-height: 1.4; }
+
+        /* YouTube jaisa "Up Next" Section */
+        .suggested-section { background: #fff; margin-top: 10px; padding-top: 10px; }
+        .suggested-header { font-size: 16px; font-weight: 500; padding: 5px 15px 15px 15px; margin: 0; color: #0f0f0f; }
+        .suggested-card { display: flex; gap: 12px; padding: 0 15px 15px 15px; cursor: pointer; }
+        .suggested-thumb { width: 140px; aspect-ratio: 16/9; background-color: #111; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+        .suggested-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .suggested-info { display: flex; flex-direction: column; }
+        .suggested-title { font-size: 14px; font-weight: 500; margin: 0 0 4px 0; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3;}
+        .suggested-meta { font-size: 12px; color: #606060; margin: 0; }
     </style>
 </head>
 <body>
@@ -56,15 +66,15 @@
 
     <div class="content-info">
         <h1 class="video-title" id="videoTitle">Loading Video...</h1>
-        <p class="video-meta"><span id="viewCount">0</span> views • the new tips</p>
+        <p class="video-meta"><span id="viewCount">0</span> views</p>
         
         <div class="action-bar">
-            <div class="action-btn" id="likeBtn" onclick="likeVideo()">
+            <div class="action-btn" id="likeBtn" onclick="toggleLike()">
                 <svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91z"/></svg>
                 <span id="likeCount">0</span>
             </div>
             
-            <div class="action-btn">
+            <div class="action-btn" id="dislikeBtn" onclick="toggleDislike()">
                 <svg viewBox="0 0 24 24" style="transform: rotate(180deg);"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91z"/></svg>
                 Dislike
             </div>
@@ -112,8 +122,15 @@
         </div>
     </div>
 
+    <div class="suggested-section">
+        <h3 class="suggested-header">Up Next</h3>
+        <div id="suggestedList">
+            <p style="text-align: center; color: #606060; padding: 20px;">Loading suggested videos...</p>
+        </div>
+    </div>
+
     <script>
-        // Exact Firebase Config
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
@@ -131,25 +148,22 @@
         const videoFileId = params.get('id') || params.get('fileId'); 
         const videoTitleParam = decodeURIComponent(params.get('title') || 'Playing Video');
         
-        let videoDocId = null; // Global variables jo features chalayenge
+        let videoDocId = null; 
         let currentUploaderId = null; 
 
-        // 1. Play the Video (Ye turant chalega)
         if (videoFileId) {
             document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoFileId}`;
             document.getElementById('videoTitle').innerText = videoTitleParam;
             document.title = videoTitleParam;
 
-            // 2. Fetch Video Metadata (Smart logic to fix the "Loading..." bug)
-            // 'in' query dono Number aur String format ko support karti hai, isliye ab video hang nahi hogi
+            // Fetch current video details
             db.collection("videos").where("fileId", "in", [videoFileId, Number(videoFileId), String(videoFileId)]).onSnapshot((snap) => {
                 if (!snap.empty) {
                     const doc = snap.docs[0];
-                    videoDocId = doc.id; // Asli ID mil gayi!
+                    videoDocId = doc.id; 
                     const video = doc.data();
                     currentUploaderId = video.uploaderId;
 
-                    // Update UI info
                     document.getElementById('likeCount').innerText = video.likes || 0;
                     document.getElementById('viewCount').innerText = video.views || 0;
                     document.getElementById('channelName').innerText = video.channelName || "the new tips";
@@ -158,23 +172,52 @@
                         document.getElementById('channelAvatar').innerHTML = `<img src="${video.channelAvatar}">`;
                     }
 
-                    // Subscriber count lana
                     if(currentUploaderId){
                         db.collection("users").doc(currentUploaderId).onSnapshot(uDoc => {
                             if(uDoc.exists) document.getElementById('channelSubs').innerText = uDoc.data().subscribers || 0;
                         });
                         checkSubStatus();
                     }
-
-                    // Comments load karna shuru karein
                     loadCommentsRealtime();
-                } else {
-                    document.getElementById('commentList').innerHTML = "<p style='text-align:center;'>Details fetching failed but video is playing.</p>";
+                    checkLikeDislikeStatus(); // Check initial Like/Dislike state
+                }
+            });
+
+            loadSuggestedVideos();
+        }
+
+        // --- SUGGESTED VIDEOS ---
+        function loadSuggestedVideos() {
+            db.collection("videos").orderBy("uploadedAt", "desc").limit(15).onSnapshot(snap => {
+                const list = document.getElementById('suggestedList');
+                list.innerHTML = "";
+                
+                snap.forEach(doc => {
+                    const v = doc.data();
+                    if (String(v.fileId) !== String(videoFileId)) { 
+                        let time = v.uploadedAt ? new Date(v.uploadedAt.toMillis()).toLocaleDateString() : 'New';
+                        let channel = v.channelName || 'the new tips';
+                        
+                        list.innerHTML += `
+                            <div class="suggested-card" onclick="window.location.href='player.html?id=${v.fileId}&title=${encodeURIComponent(v.title)}'">
+                                <div class="suggested-thumb">
+                                    <img src="https://img.youtube.com/vi/${v.fileId}/mqdefault.jpg" onerror="this.src='https://via.placeholder.com/140x79?text=Video';">
+                                </div>
+                                <div class="suggested-info">
+                                    <h4 class="suggested-title">${v.title}</h4>
+                                    <p class="suggested-meta">${channel}</p>
+                                    <p class="suggested-meta">${v.views || 0} views • ${time}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if(list.innerHTML === "") {
+                    list.innerHTML = "<p style='text-align: center; color: #606060; padding: 20px;'>No more videos to suggest right now.</p>";
                 }
             });
         }
-
-        // --- ALL FEATURES WORKING LOGIC ---
 
         function checkLogin() {
             if (!auth.currentUser) {
@@ -184,53 +227,97 @@
             return true;
         }
 
-        // 1. Like Feature
-        function likeVideo() {
-            if (!checkLogin() || !videoDocId) return;
-            db.collection("videos").doc(videoDocId).update({
-                likes: firebase.firestore.FieldValue.increment(1)
-            });
-            document.getElementById('likeBtn').classList.add('active');
+        // --- NEW LOGIC: LIKE AND DISLIKE TOGGLE ---
+        function checkLikeDislikeStatus() {
+            if (auth.currentUser && videoDocId) {
+                const uid = auth.currentUser.uid;
+                db.collection("videos").doc(videoDocId).collection("likes").doc(uid).onSnapshot(doc => {
+                    if (doc.exists) document.getElementById('likeBtn').classList.add('active');
+                    else document.getElementById('likeBtn').classList.remove('active');
+                });
+                db.collection("videos").doc(videoDocId).collection("dislikes").doc(uid).onSnapshot(doc => {
+                    if (doc.exists) document.getElementById('dislikeBtn').classList.add('active');
+                    else document.getElementById('dislikeBtn').classList.remove('active');
+                });
+            }
         }
 
-        // 2. Share Feature
+        function toggleLike() {
+            if (!checkLogin() || !videoDocId) return;
+            const uid = auth.currentUser.uid;
+            const likeRef = db.collection("videos").doc(videoDocId).collection("likes").doc(uid);
+            const dislikeRef = db.collection("videos").doc(videoDocId).collection("dislikes").doc(uid);
+
+            likeRef.get().then(doc => {
+                if (doc.exists) {
+                    // Agar pehle se like hai, toh unlike karo
+                    likeRef.delete();
+                    db.collection("videos").doc(videoDocId).update({ likes: firebase.firestore.FieldValue.increment(-1) });
+                } else {
+                    // Like karo
+                    likeRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    db.collection("videos").doc(videoDocId).update({ likes: firebase.firestore.FieldValue.increment(1) });
+                    
+                    // Agar dislike tha toh usko hatao
+                    dislikeRef.get().then(dDoc => {
+                        if (dDoc.exists) dislikeRef.delete();
+                    });
+                }
+            });
+        }
+
+        function toggleDislike() {
+            if (!checkLogin() || !videoDocId) return;
+            const uid = auth.currentUser.uid;
+            const likeRef = db.collection("videos").doc(videoDocId).collection("likes").doc(uid);
+            const dislikeRef = db.collection("videos").doc(videoDocId).collection("dislikes").doc(uid);
+
+            dislikeRef.get().then(doc => {
+                if (doc.exists) {
+                    // Agar pehle se dislike hai, toh hatao
+                    dislikeRef.delete();
+                } else {
+                    // Dislike karo
+                    dislikeRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    
+                    // Agar like tha toh usko hatao
+                    likeRef.get().then(lDoc => {
+                        if (lDoc.exists) {
+                            likeRef.delete();
+                            db.collection("videos").doc(videoDocId).update({ likes: firebase.firestore.FieldValue.increment(-1) });
+                        }
+                    });
+                }
+            });
+        }
+        // --- END LIKE/DISLIKE LOGIC ---
+
         function shareVideo() {
             if (navigator.share) {
-                navigator.share({
-                    title: videoTitleParam,
-                    url: window.location.href,
-                });
+                navigator.share({ title: videoTitleParam, url: window.location.href });
             } else {
                 alert("Link copied! " + window.location.href);
             }
         }
 
-        // 3. Save Feature (Watch Later)
         function saveVideo() {
             if (!checkLogin() || !videoDocId) return;
             db.collection("users").doc(auth.currentUser.uid).collection("watchLater").add({
-                fileId: videoFileId,
-                title: videoTitleParam,
-                savedAt: firebase.firestore.FieldValue.serverTimestamp()
+                fileId: videoFileId, title: videoTitleParam, savedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 document.getElementById('saveBtn').classList.add('active');
                 document.getElementById('saveText').innerText = "Saved";
             });
         }
 
-        // 4. Download Feature
         function downloadVideo() {
             if (!videoFileId) return;
             const a = document.createElement('a');
             a.href = `https://intube-backend.onrender.com/stream/${videoFileId}`;
-            a.target = "_blank";
-            a.download = "Intube_Video.mp4";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            a.target = "_blank"; a.download = "Intube_Video.mp4";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        // 5. Subscribe Feature
         function toggleSubscribe() {
             if (!checkLogin() || !currentUploaderId) return;
             if (currentUploaderId === auth.currentUser.uid) { alert("You can't subscribe to yourself!"); return; }
@@ -242,14 +329,12 @@
                 if (doc.exists) {
                     subRef.delete().then(() => {
                         db.collection("users").doc(currentUploaderId).update({ subscribers: firebase.firestore.FieldValue.increment(-1) });
-                        btn.innerText = "Subscribe";
-                        btn.classList.remove('subscribed');
+                        btn.innerText = "Subscribe"; btn.classList.remove('subscribed');
                     });
                 } else {
                     subRef.set({ subscribedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
                         db.collection("users").doc(currentUploaderId).update({ subscribers: firebase.firestore.FieldValue.increment(1) });
-                        btn.innerText = "Subscribed";
-                        btn.classList.add('subscribed');
+                        btn.innerText = "Subscribed"; btn.classList.add('subscribed');
                     });
                 }
             });
@@ -260,14 +345,12 @@
                 db.collection("users").doc(auth.currentUser.uid).collection("subscriptions").doc(currentUploaderId).get().then(doc => {
                     if(doc.exists) {
                         const btn = document.getElementById('subBtn');
-                        btn.innerText = "Subscribed";
-                        btn.classList.add('subscribed');
+                        btn.innerText = "Subscribed"; btn.classList.add('subscribed');
                     }
                 });
             }
         }
 
-        // 6. Comments Feature (Realtime Load)
         function loadCommentsRealtime() {
             if(!videoDocId) return;
             db.collection("videos").doc(videoDocId).collection("comments").orderBy("createdAt", "desc").onSnapshot(snap => {
@@ -282,39 +365,4 @@
 
                 snap.forEach(doc => {
                     const c = doc.data();
-                    let avatar = c.userAvatar ? `<img src="${c.userAvatar}" style="width:100%;height:100%;object-fit:cover;">` : `<span>${(c.userName || 'U').charAt(0).toUpperCase()}</span>`;
-                    list.innerHTML += `
-                        <div class="comment-item">
-                            <div class="comment-avatar">${avatar}</div>
-                            <div>
-                                <p class="comment-user" style="margin:0;">${c.userName || 'User'}</p>
-                                <p class="comment-text">${c.commentText}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-        }
-
-        // 7. Post Comment
-        function postComment() {
-            if (!checkLogin() || !videoDocId) return;
-            const input = document.getElementById('commentInput');
-            const text = input.value.trim();
-            if(!text) return;
-
-            document.getElementById('postBtn').innerText = "...";
-            db.collection("videos").doc(videoDocId).collection("comments").add({
-                commentText: text,
-                userName: auth.currentUser.displayName || "User",
-                userAvatar: auth.currentUser.photoURL || "",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                input.value = "";
-                document.getElementById('postBtn').innerText = "Post";
-            });
-        }
-    </script>
-</body>
-</html>
-
+                    let avatar = c.userAvatar ? `<img src="${c.userAvatar}" style="width:100%;height:100%;object-fit:cover;">` : `<span>${(c.userName || 'U').charAt(0).toUpperCa
