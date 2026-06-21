@@ -28,9 +28,9 @@
         .video-title { font-size: 13px; font-weight: 500; margin: 0 0 4px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .video-views { font-size: 12px; color: #606060; }
         
-        /* Navigation Bar */
+        /* Unified Navigation Bar */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
-        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; }
         .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
     </style>
 </head>
@@ -55,9 +55,9 @@
     <div class="bottom-nav">
         <div class="nav-item" onclick="window.location='index.html'">🏠<small>Home</small></div>
         <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
-        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 20px;">➕</div>
+        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 24px;">➕</div>
         <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
-        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
+        <div class="nav-item" onclick="window.location='profile.html'"><b>👤</b><small><b>You</b></small></div>
     </div>
 
     <script>
@@ -73,18 +73,16 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 1. Live Subscribers Fetch
         db.collection("channel_info").doc("myChannel").onSnapshot(doc => {
             if(doc.exists) {
                 document.getElementById('subCount').innerText = doc.data().subscribers || 0;
             }
         });
 
-        // 2. Videos Fetch karke Grid mein lagana
         db.collection("videos").orderBy("uploadedAt", "desc").get().then(snap => {
-            document.getElementById('videoCount').innerText = snap.size; // Total videos count
+            document.getElementById('videoCount').innerText = snap.size; 
             const grid = document.getElementById('videoGrid');
-            grid.innerHTML = ''; // Loading text hatana
+            grid.innerHTML = ''; 
             
             if (snap.empty) {
                 grid.innerHTML = '<p style="padding: 10px; color: #606060;">Abhi tak koi video upload nahi ki gayi.</p>';
@@ -94,7 +92,6 @@
             snap.forEach(doc => {
                 let video = doc.data();
                 
-                // Video Card create karna, jisse click karke player.html open ho
                 grid.innerHTML += `
                     <div class="video-card" onclick="window.location='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}'">
                         <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.src='https://via.placeholder.com/320x180?text=Video'">
