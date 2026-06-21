@@ -1,14 +1,168 @@
-<h3>Channel Stats</h3>
-<div id="stats">
-    <p>Total Views: <span id="totalViews">0</span></p>
-    <p>Total Subscribers: <span id="totalSubs">0</span></p>
-</div>
-<script>
-    // Firebase se data lekar display karein
-    db.collection("videos").get().then(snap => {
-        let views = 0;
-        snap.forEach(doc => views += doc.data().views || 0);
-        document.getElementById('totalViews').innerText = views;
-    });
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - the new tips</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f9f9f9; color: #0f0f0f; padding-bottom: 70px; }
+        
+        .header { padding: 15px; background: white; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .header h2 { margin: 0; font-size: 20px; font-weight: 500; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
+        .stat-card { background: white; padding: 20px 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card h3 { margin: 0; font-size: 28px; color: #065fd4; }
+        .stat-card p { margin: 5px 0 0 0; font-size: 14px; color: #606060; font-weight: 500; }
+        
+        /* Progress Bar Section */
+        .progress-section { background: white; margin: 0 15px 15px 15px; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .progress-header h3 { margin: 0; font-size: 16px; font-weight: 500; }
+        .progress-header span { font-size: 14px; color: #606060; font-weight: bold; }
+        
+        .progress-bg { width: 100%; height: 12px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #065fd4, #ff0000); width: 0%; border-radius: 10px; transition: width 1s ease-in-out; }
+        .milestone-text { text-align: center; font-size: 13px; color: #606060; margin-top: 10px; }
+
+        /* Recent Performance */
+        .performance-section { background: white; margin: 0 15px 15px 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .performance-title { padding: 15px; margin: 0; font-size: 16px; font-weight: 500; border-bottom: 1px solid #e5e5e5; }
+        .video-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #f2f2f2; }
+        .video-item:last-child { border-bottom: none; }
+        .video-name { font-size: 14px; color: #0f0f0f; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; max-width: 70%; }
+        .video-views { font-size: 14px; color: #065fd4; font-weight: bold; }
+
+        /* Unified Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; }
+        .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>📈 Creator Analytics</h2>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3 id="totalViewsCard">0</h3>
+            <p>Total Views</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="totalVideosCard">0</h3>
+            <p>Videos Uploaded</p>
+        </div>
+    </div>
+
+    <div class="progress-section">
+        <div class="progress-header">
+            <h3>Road to 1,000 Subscribers</h3>
+            <span id="subCountText">0 / 1000</span>
+        </div>
+        <div class="progress-bg">
+            <div class="progress-fill" id="subProgressBar"></div>
+        </div>
+        <p class="milestone-text" id="milestoneMessage">Keep uploading to reach your goal!</p>
+    </div>
+
+    <div class="performance-section">
+        <h3 class="performance-title">Top Performing Videos</h3>
+        <div id="topVideosList">
+            <p style="text-align:center; color:#606060; font-size:13px; padding:15px;">Loading stats...</p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location='index.html'">🏠<small>Home</small></div>
+        <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
+        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 24px;">➕</div>
+        <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
+        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+            measurementId: "G-944K8C4VM8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Fetch Subscribers & Update Progress Bar
+        const goal = 1000;
+        db.collection("channel_info").doc("myChannel").onSnapshot(doc => {
+            if(doc.exists) {
+                let subs = doc.data().subscribers || 0;
+                document.getElementById('subCountText').innerText = `${subs} / ${goal}`;
+                
+                // Calculate percentage
+                let percent = (subs / goal) * 100;
+                if(percent > 100) percent = 100; // Cap at 100%
+                
+                document.getElementById('subProgressBar').style.width = percent + '%';
+
+                // Change milestone text based on progress
+                let message = document.getElementById('milestoneMessage');
+                if (subs >= 1000) {
+                    message.innerText = "🎉 Congratulations! You reached 1K Subscribers!";
+                    message.style.color = "green";
+                    message.style.fontWeight = "bold";
+                } else if (subs >= 500) {
+                    message.innerText = "🔥 Halfway there! Don't stop now.";
+                } else {
+                    message.innerText = `Just ${goal - subs} more subscribers to go!`;
+                }
+            }
+        });
+
+        // 2. Fetch Total Views & Top Videos
+        db.collection("videos").onSnapshot(snap => {
+            let totalViews = 0;
+            let totalVideos = snap.size;
+            let videosArray = [];
+
+            snap.forEach(doc => {
+                let v = doc.data();
+                totalViews += (v.views || 0);
+                videosArray.push({ title: v.title, views: v.views || 0 });
+            });
+
+            // Update Top Cards
+            document.getElementById('totalViewsCard').innerText = totalViews;
+            document.getElementById('totalVideosCard').innerText = totalVideos;
+
+            // Sort videos by highest views to show top performers
+            videosArray.sort((a, b) => b.views - a.views);
+            
+            let listHTML = "";
+            let topCount = Math.min(3, videosArray.length); // Show top 3
+
+            if(topCount === 0) {
+                listHTML = `<p style="text-align:center; color:#606060; font-size:13px; padding:15px;">No videos uploaded yet.</p>`;
+            } else {
+                for(let i = 0; i < topCount; i++) {
+                    listHTML += `
+                        <div class="video-item">
+                            <span class="video-name">#${i+1} ${videosArray[i].title}</span>
+                            <span class="video-views">${videosArray[i].views} views</span>
+                        </div>
+                    `;
+                }
+            }
+            document.getElementById('topVideosList').innerHTML = listHTML;
+        });
+    </script>
+</body>
+</html>
 
