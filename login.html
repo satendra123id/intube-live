@@ -11,31 +11,19 @@
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         body { font-family: 'Roboto', sans-serif; background: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         
-        .login-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
-        .logo { font-size: 24px; font-weight: 700; color: #ff0000; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
-        .logo svg { fill: red; width: 30px; height: 30px; }
+        .login-box { background: white; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
+        .logo { font-size: 28px; font-weight: 700; color: #ff0000; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .logo svg { fill: red; width: 36px; height: 36px; }
         
-        h2 { margin: 0 0 20px 0; font-size: 18px; color: #333; }
+        h2 { margin: 0 0 30px 0; font-size: 18px; color: #333; }
         
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none;}
-        input:focus { border-color: #065fd4; }
+        .google-btn { width: 100%; background: #fff; color: #333; border: 1px solid #ccc; padding: 12px; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .google-btn:hover { background: #f1f1f1; }
+        .google-btn img { width: 20px; height: 20px; }
 
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; margin-bottom: 10px; transition: 0.2s;}
-        .btn-primary { background: #065fd4; color: white; }
-        .btn-primary:hover { background: #0056b3; }
-        .btn-secondary { background: #fff; color: #065fd4; border: 1px solid #065fd4; }
-        .btn-secondary:hover { background: #f2f8ff; }
+        .error-msg { color: red; font-size: 13px; margin-bottom: 15px; display: none; background: #ffe6e6; padding: 8px; border-radius: 4px;}
         
-        .divider { display: flex; align-items: center; text-align: center; margin: 15px 0; color: #888; font-size: 12px; }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #eee; }
-        .divider:not(:empty)::before { margin-right: .25em; }
-        .divider:not(:empty)::after { margin-left: .25em; }
-
-        .google-btn { background: #fff; color: #333; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .google-btn:hover { background: #f9f9f9; }
-        .google-btn img { width: 18px; height: 18px; }
-
-        .error-msg { color: red; font-size: 13px; margin-bottom: 10px; display: none; }
+        .warning { font-size: 12px; color: #888; margin-top: 20px; line-height: 1.4;}
     </style>
 </head>
 <body>
@@ -47,24 +35,18 @@
         </div>
         <h2>Sign in to continue</h2>
 
-        <p class="error-msg" id="errorMsg"></p>
+        <div class="error-msg" id="errorMsg"></div>
 
-        <input type="email" id="emailInput" placeholder="Email address" required>
-        <input type="password" id="passInput" placeholder="Password" required>
-        
-        <button class="btn btn-primary" onclick="loginWithEmail()">Login</button>
-        <button class="btn btn-secondary" onclick="signUpWithEmail()">Create New Account</button>
-
-        <div class="divider">OR</div>
-
-        <button class="btn google-btn" onclick="loginWithGoogle()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
-            Sign in with Google (Web Only)
+        <button class="google-btn" onclick="loginWithGoogle()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
+            Sign in with Google
         </button>
+
+        <p class="warning">Note: Google login works best on Web Browsers (Chrome/Safari). It may be blocked inside Android WebView apps.</p>
     </div>
 
     <script>
-        // Exact Firebase Config
+        // Aapka Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
@@ -77,7 +59,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Check if redirect is pending
         const params = new URLSearchParams(window.location.search);
         const redirectUrl = params.get('redirect') || 'index.html';
 
@@ -87,63 +68,23 @@
             errDiv.innerText = msg;
         }
 
-        // 1. Email Login (APP KE LIYE PERFECT)
-        function loginWithEmail() {
-            const email = document.getElementById('emailInput').value;
-            const pass = document.getElementById('passInput').value;
-            
-            if(!email || !pass) return showError("Please enter Email and Password.");
-
-            auth.signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    window.location.href = redirectUrl;
-                })
-                .catch((error) => {
-                    showError(error.message);
-                });
-        }
-
-        // 2. Email Sign Up (Naya Account Banane Ke Liye)
-        function signUpWithEmail() {
-            const email = document.getElementById('emailInput').value;
-            const pass = document.getElementById('passInput').value;
-            
-            if(!email || !pass) return showError("Please enter Email and Password to register.");
-            if(pass.length < 6) return showError("Password must be at least 6 characters.");
-
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    // Save user profile in DB
-                    db.collection("users").doc(userCredential.user.uid).set({
-                        name: email.split('@')[0], // Extract name from email
-                        email: email,
-                        subscribers: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        window.location.href = redirectUrl;
-                    });
-                })
-                .catch((error) => {
-                    showError(error.message);
-                });
-        }
-
-        // 3. Google Login (Ye Web/Browser me chalega)
+        // Google Login Function
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
                 .then((result) => {
+                    // Database me user data save karein
                     db.collection("users").doc(result.user.uid).set({
                         name: result.user.displayName,
                         email: result.user.email,
                         photo: result.user.photoURL,
-                        subscribers: 0 // Optional default value
+                        subscribers: 0 
                     }, { merge: true }).then(() => {
                         window.location.href = redirectUrl;
                     });
                 })
                 .catch((error) => {
-                    showError("Google Login blocked in App. Please use Email/Password.");
+                    showError(error.message);
                 });
         }
 
