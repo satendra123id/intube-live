@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>the new tips - Profile</title>
+    <title>Profile - Intube</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: Roboto, Arial, sans-serif; margin: 0; background: #f9f9f9; padding-bottom: 70px; }
         
-        /* Cover aur Profile Image styling */
         .cover-photo { width: 100%; height: 100px; background: #065fd4; object-fit: cover; }
-        .profile-header { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; border-bottom: 1px solid #e5e5e5; text-align: center; }
+        .profile-header { display: flex; flex-direction: column; align-items: center; padding: 15px 15px 25px 15px; background: #fff; border-bottom: 1px solid #e5e5e5; text-align: center; }
         .profile-header img { width: 80px; height: 80px; border-radius: 50%; margin-top: -40px; border: 3px solid #fff; object-fit: cover; background: #ddd; }
         
-        /* Channel Details */
         .channel-name { font-size: 22px; font-weight: bold; margin: 10px 0 5px 0; color: #0f0f0f; }
         .channel-stats { font-size: 14px; color: #606060; margin-bottom: 10px; }
-        .channel-desc { font-size: 14px; color: #0f0f0f; }
+        .channel-desc { font-size: 14px; color: #0f0f0f; margin-bottom: 15px; }
+        
+        /* Logout Button Style */
+        .logout-btn { background: #f2f2f2; color: #0f0f0f; border: 1px solid #ddd; padding: 8px 20px; border-radius: 20px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+        .logout-btn:hover { background: #e5e5e5; }
+
         .section-title { padding: 15px; font-size: 16px; font-weight: bold; margin: 0; background: #f9f9f9; }
         
-        /* Video Grid Styling */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
         .video-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
         .video-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #000; }
@@ -28,7 +31,6 @@
         .video-title { font-size: 13px; font-weight: 500; margin: 0 0 4px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .video-views { font-size: 12px; color: #606060; }
         
-        /* Unified Navigation Bar */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
         .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; }
         .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
@@ -39,14 +41,15 @@
     <div class="cover-photo"></div>
 
     <div class="profile-header">
-        <img src="my-studio-pic.jpg" alt="Profile" onerror="this.src='https://via.placeholder.com/100?text=Logo'">
+        <img id="userProfilePic" src="https://via.placeholder.com/100?text=Logo" alt="Profile">
+        <div class="channel-name" id="userChannelName">Loading Name...</div>
+        <div class="channel-stats"><span id="userHandle">@handle</span> • <span id="subCount">0</span> subscribers • <span id="videoCount">0</span> videos</div>
+        <div class="channel-desc" id="userEmailDesc">Loading details...</div>
         
-        <div class="channel-name">the new tips</div>
-        <div class="channel-stats">@thenewtips • <span id="subCount">0</span> subscribers • <span id="videoCount">0</span> videos</div>
-        <div class="channel-desc">Ethical Hacking & Termux Tutorials</div>
+        <button class="logout-btn" onclick="logoutUser()">Log Out</button>
     </div>
 
-    <h3 class="section-title">Uploaded Videos</h3>
+    <h3 class="section-title">My Uploads</h3>
     
     <div class="video-grid" id="videoGrid">
         <p style="padding: 10px; color: #606060;">Loading videos...</p>
@@ -72,13 +75,36 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth(); // Auth initialize kiya
 
-        db.collection("channel_info").doc("myChannel").onSnapshot(doc => {
-            if(doc.exists) {
-                document.getElementById('subCount').innerText = doc.data().subscribers || 0;
+        // 1. Check Login State & Setup Profile
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User login hai, uski asli details profile me daalo
+                document.getElementById('userProfilePic').src = user.photoURL || 'https://via.placeholder.com/100';
+                document.getElementById('userChannelName').innerText = user.displayName || "Unknown User";
+                document.getElementById('userEmailDesc').innerText = user.email; // Description me ab email dikhega
+                
+                // Name se auto-generate handle (jaise Satendr Lodhi -> @satendrlodhi)
+                if(user.displayName) {
+                    let handleName = user.displayName.replace(/\s+/g, '').toLowerCase();
+                    document.getElementById('userHandle').innerText = '@' + handleName;
+                }
+
+                // Database se subscribers nikalo (agar hain to)
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                    if(doc.exists) {
+                        document.getElementById('subCount').innerText = doc.data().subscribers || 0;
+                    }
+                });
+
+            } else {
+                // Agar user login nahi hai, toh Profile nahi dekh sakta, use login page par bhej do
+                window.location.href = "login.html";
             }
         });
 
+        // 2. Load Videos
         db.collection("videos").orderBy("uploadedAt", "desc").get().then(snap => {
             document.getElementById('videoCount').innerText = snap.size; 
             const grid = document.getElementById('videoGrid');
@@ -91,7 +117,6 @@
 
             snap.forEach(doc => {
                 let video = doc.data();
-                
                 grid.innerHTML += `
                     <div class="video-card" onclick="window.location='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}'">
                         <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.src='https://via.placeholder.com/320x180?text=Video'">
@@ -105,6 +130,13 @@
         }).catch(error => {
             console.error("Error fetching videos: ", error);
         });
+
+        // 3. Logout Function
+        function logoutUser() {
+            auth.signOut().then(() => {
+                window.location.href = "index.html"; // Logout karke wapas home page par bhej do
+            });
+        }
     </script>
 </body>
 </html>
