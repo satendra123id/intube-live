@@ -1,16 +1,211 @@
-<style>
-    .short { height: 100vh; width: 100%; object-fit: cover; scroll-snap-align: start; }
-</style>
-<div style="overflow-y: scroll; height: 100vh; scroll-snap-type: y mandatory;">
-    <video class="short" src="video1.mp4" controls></video>
-    <video class="short" src="video2.mp4" controls></video>
-</div>
-<div style="position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000;">
-    <div onclick="window.location='index.html'" style="text-align: center; cursor: pointer;">🏠<br><small>Home</small></div>
-    <div onclick="window.location='shorts.html'" style="text-align: center; cursor: pointer;">⚡<br><small>Shorts</small></div>
-    <div onclick="window.location='studio.html'" style="text-align: center; cursor: pointer; font-size: 24px;">➕</div>
-    <div onclick="window.location='subs.html'" style="text-align: center; cursor: pointer;">🔔<br><small>Subs</small></div>
-    <div onclick="window.location='profile.html'" style="text-align: center; cursor: pointer;">👤<br><small>You</small></div>
-</div>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shorts - the new tips</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background: #000; font-family: Roboto, Arial, sans-serif; overflow: hidden; }
+        
+        /* Shorts Feed Container */
+        .feed-container {
+            height: calc(100vh - 60px); /* Niche ke Nav bar ke liye jagah chhodi hai */
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            /* Hide scrollbar for clean look */
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
+        }
+        .feed-container::-webkit-scrollbar { display: none; }
 
+        /* Individual Short Container */
+        .short-wrapper {
+            height: 100%;
+            width: 100%;
+            scroll-snap-align: start;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0f0f0f;
+        }
+
+        /* Video Player - Strict 9x16 Layout */
+        .short-video {
+            height: 100%;
+            aspect-ratio: 9/16;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        /* Overlay UI (Title, Buttons) */
+        .overlay-ui {
+            position: absolute;
+            bottom: 20px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            color: #fff;
+            z-index: 10;
+        }
+
+        .video-info {
+            max-width: 70%;
+        }
+        .video-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin: 0 0 10px 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* Action Buttons on the Right */
+        .side-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        .action-btn {
+            background: rgba(0,0,0,0.5);
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .action-text {
+            font-size: 11px;
+            margin-top: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; }
+        .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container" id="shortsFeed">
+        <h3 style="color: white; text-align: center; margin-top: 50px;">Loading Shorts...</h3>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location='index.html'">🏠<small>Home</small></div>
+        <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
+        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 20px;">➕</div>
+        <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
+        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+            measurementId: "G-944K8C4VM8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const shortsFeed = document.getElementById('shortsFeed');
+
+        // Fetch Videos from Firebase
+        db.collection("videos").orderBy("uploadedAt", "desc").get().then(snap => {
+            shortsFeed.innerHTML = ''; // Clear loading text
+
+            if (snap.empty) {
+                shortsFeed.innerHTML = '<h3 style="color: white; text-align: center; margin-top: 50px;">No shorts available.</h3>';
+                return;
+            }
+
+            snap.forEach(doc => {
+                let video = doc.data();
+                let videoUrl = `https://intube-backend.onrender.com/stream/${video.fileId}`;
+
+                // Muted by default so auto-play works on mobile browsers
+                let shortHTML = `
+                    <div class="short-wrapper">
+                        <video class="short-video" src="${videoUrl}" loop playsinline muted onclick="toggleMute(this)"></video>
+                        
+                        <div class="overlay-ui">
+                            <div class="video-info">
+                                <h3 class="video-title">${video.title}</h3>
+                                <button style="background: red; color: white; border: none; padding: 5px 12px; border-radius: 15px; font-weight: bold; cursor: pointer;">Subscribe</button>
+                            </div>
+                            
+                            <div class="side-actions">
+                                <div>
+                                    <button class="action-btn" onclick="alert('Liked!')">👍</button>
+                                    <div class="action-text">${video.likes || 0}</div>
+                                </div>
+                                <div>
+                                    <button class="action-btn" onclick="alert('Comments coming soon!')">💬</button>
+                                    <div class="action-text">0</div>
+                                </div>
+                                <div>
+                                    <button class="action-btn" onclick="copyLink('${video.fileId}')">🔗</button>
+                                    <div class="action-text">Share</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                shortsFeed.innerHTML += shortHTML;
+            });
+
+            setupAutoPlay(); // Play/Pause scroll hone par setup karein
+        });
+
+        // Tap karne par aawaz (sound) on/off karne ke liye
+        window.toggleMute = function(videoElement) {
+            videoElement.muted = !videoElement.muted;
+        };
+
+        // Share link copy karne ke liye
+        window.copyLink = function(fileId) {
+            let link = window.location.origin + `/player.html?id=${fileId}`;
+            navigator.clipboard.writeText(link);
+            alert("Share link copied!");
+        };
+
+        // Scroll karne par sirf samne wali video play hogi, baaki pause
+        function setupAutoPlay() {
+            const videos = document.querySelectorAll('.short-video');
+            
+            let observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.play().catch(e => console.log("Auto-play blocked by browser, waiting for user tap."));
+                    } else {
+                        entry.target.pause();
+                        entry.target.currentTime = 0; // Wapas start se shuru karne ke liye
+                    }
+                });
+            }, { threshold: 0.7 }); // Jab video 70% screen par ho tabhi play ho
+
+            videos.forEach(video => {
+                observer.observe(video);
+            });
+        }
+    </script>
+</body>
+</html>
