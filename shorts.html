@@ -2,208 +2,288 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shorts - the new tips</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shorts - Intube</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #000; font-family: Roboto, Arial, sans-serif; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #000; color: white; overflow: hidden; }
         
-        /* Shorts Feed Container */
-        .feed-container {
-            height: calc(100vh - 60px); /* Niche ke Nav bar ke liye jagah chhodi hai */
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
-            /* Hide scrollbar for clean look */
-            -ms-overflow-style: none;  
-            scrollbar-width: none;  
-        }
-        .feed-container::-webkit-scrollbar { display: none; }
+        /* Shorts Scroll Container */
+        .shorts-container { height: calc(100vh - 60px); width: 100vw; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+        .shorts-container::-webkit-scrollbar { display: none; }
+        
+        /* Individual Short Card */
+        .short-wrapper { height: 100%; width: 100vw; scroll-snap-align: start; position: relative; background: #111; display: flex; justify-content: center; align-items: center; }
+        .short-video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* UI Overlays */
+        .bottom-info { position: absolute; bottom: 20px; left: 15px; width: 70%; z-index: 10; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .channel-info { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .channel-avatar { width: 34px; height: 34px; border-radius: 50%; background: #065fd4; display: flex; justify-content: center; align-items: center; overflow: hidden; border: 1px solid white;}
+        .channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .channel-name { font-size: 15px; font-weight: 500; }
+        .short-title { font-size: 14px; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* Right Side Floating Actions */
+        .right-actions { position: absolute; bottom: 20px; right: 10px; display: flex; flex-direction: column; gap: 20px; align-items: center; z-index: 10; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; color: white; }
+        .icon-circle { width: 45px; height: 45px; background: rgba(0,0,0,0.4); border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: 0.2s;}
+        .icon-circle svg { width: 24px; height: 24px; fill: white; }
+        .action-btn.liked .icon-circle svg { fill: #065fd4; }
+        .action-text { font-size: 12px; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
-        /* Individual Short Container */
-        .short-wrapper {
-            height: 100%;
-            width: 100%;
-            scroll-snap-align: start;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #0f0f0f;
-        }
-
-        /* Video Player - Strict 9x16 Layout */
-        .short-video {
-            height: 100%;
-            aspect-ratio: 9/16;
-            object-fit: cover;
-            cursor: pointer;
-        }
-
-        /* Overlay UI (Title, Buttons) */
-        .overlay-ui {
-            position: absolute;
-            bottom: 20px;
-            left: 15px;
-            right: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            color: #fff;
-            z-index: 10;
-        }
-
-        .video-info {
-            max-width: 70%;
-        }
-        .video-title {
-            font-size: 15px;
-            font-weight: 500;
-            margin: 0 0 10px 0;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* Action Buttons on the Right */
-        .side-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-        .action-btn {
-            background: rgba(0,0,0,0.5);
-            border: none;
-            color: white;
-            padding: 10px;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        .action-text {
-            font-size: 11px;
-            margin-top: 5px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-        }
-
-        /* Navigation Bar */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
-        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; }
-        .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
+        /* Comments Bottom Sheet Modal */
+        .comments-modal { position: fixed; bottom: -100%; left: 0; width: 100%; height: 60vh; background: white; color: black; z-index: 2000; border-radius: 16px 16px 0 0; transition: 0.3s ease-in-out; display: flex; flex-direction: column; box-shadow: 0 -5px 15px rgba(0,0,0,0.2);}
+        .comments-modal.active { bottom: 0; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #ddd; }
+        .modal-header h3 { margin: 0; font-size: 16px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .modal-body { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        .modal-footer { padding: 10px 15px 20px 15px; border-top: 1px solid #ddd; display: flex; gap: 10px; background: #f9f9f9;}
+        .modal-footer input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+        .modal-footer button { background: #065fd4; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 500; cursor: pointer; }
+        .comment-item { display: flex; gap: 10px; margin-bottom: 15px; }
+        .comment-item img, .comment-item .c-avatar { width: 30px; height: 30px; border-radius: 50%; background: #ddd; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;}
+        
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e5e5e5; z-index: 3000; }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; text-decoration: none; font-size: 20px;}
+        .nav-item small { display: block; font-size: 10px; margin-top: 3px; font-weight: 400;}
+        .nav-item.active { font-weight: 700; }
+        .nav-item.active b { font-size: 22px; color: #0f0f0f;}
+        .add-icon { font-size: 26px; font-weight: 400;}
     </style>
 </head>
 <body>
 
-    <div class="feed-container" id="shortsFeed">
-        <h3 style="color: white; text-align: center; margin-top: 50px;">Loading Shorts...</h3>
+    <div class="shorts-container" id="shortsFeed">
+        <p style="text-align: center; margin-top: 50px;">Loading Shorts...</p>
+    </div>
+
+    <div class="comments-modal" id="commentsModal">
+        <div class="modal-header">
+            <h3 id="modalCommentCount">Comments</h3>
+            <button class="close-btn" onclick="closeComments()">✖</button>
+        </div>
+        <div class="modal-body" id="modalCommentList">
+            <p style="text-align:center; color:#606060;">Loading...</p>
+        </div>
+        <div class="modal-footer">
+            <input type="text" id="shortCommentInput" placeholder="Add a comment...">
+            <button onclick="postShortComment()">Post</button>
+        </div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item" onclick="window.location='index.html'">🏠<small>Home</small></div>
-        <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
-        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 20px;">➕</div>
-        <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
-        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
+        <a href="index.html" class="nav-item">🏠<small>Home</small></a>
+        <a href="shorts.html" class="nav-item active"><b>⚡</b><small>Shorts</small></a>
+        <a href="studio.html" class="nav-item add-icon">➕</a>
+        <a href="subs.html" class="nav-item">🔔<small>Subs</small></a>
+        <a href="profile.html" class="nav-item">👤<small>You</small></a>
     </div>
 
     <script>
-        // Firebase Configuration
+        // Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
             projectId: "intube-ba578",
             storageBucket: "intube-ba578.firebasestorage.app",
             messagingSenderId: "862455398504",
-            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
-            measurementId: "G-944K8C4VM8"
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        const shortsFeed = document.getElementById('shortsFeed');
+        let currentActiveVideoId = null; // Jo video abhi screen par hai uski ID
+        let currentActiveDocId = null;   // Firestore Document ID comments ke liye
 
-        // Fetch Videos from Firebase
+        // 1. Fetch Videos & Create Shorts UI
         db.collection("videos").orderBy("uploadedAt", "desc").get().then(snap => {
-            shortsFeed.innerHTML = ''; // Clear loading text
+            const feed = document.getElementById('shortsFeed');
+            feed.innerHTML = "";
 
             if (snap.empty) {
-                shortsFeed.innerHTML = '<h3 style="color: white; text-align: center; margin-top: 50px;">No shorts available.</h3>';
+                feed.innerHTML = "<p style='text-align: center; margin-top: 50px;'>No shorts available.</p>";
                 return;
             }
 
             snap.forEach(doc => {
-                let video = doc.data();
-                let videoUrl = `https://intube-backend.onrender.com/stream/${video.fileId}`;
+                const v = doc.data();
+                const docId = doc.id;
+                
+                let avatar = v.channelAvatar ? `<img src="${v.channelAvatar}">` : `<span>${(v.channelName || 'T').charAt(0).toUpperCase()}</span>`;
 
-                // Muted by default so auto-play works on mobile browsers
-                let shortHTML = `
+                const shortHtml = `
                     <div class="short-wrapper">
-                        <video class="short-video" src="${videoUrl}" loop playsinline muted onclick="toggleMute(this)"></video>
+                        <video class="short-video" src="https://intube-backend.onrender.com/stream/${v.fileId}" loop playsinline onclick="togglePlayPause(this)"></video>
                         
-                        <div class="overlay-ui">
-                            <div class="video-info">
-                                <h3 class="video-title">${video.title}</h3>
-                                <button style="background: red; color: white; border: none; padding: 5px 12px; border-radius: 15px; font-weight: bold; cursor: pointer;">Subscribe</button>
+                        <div class="right-actions">
+                            <div class="action-btn" id="likeBtn_${docId}" onclick="toggleShortLike('${docId}')">
+                                <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91z"/></svg></div>
+                                <span class="action-text" id="likeCount_${docId}">${v.likes || 0}</span>
                             </div>
                             
-                            <div class="side-actions">
-                                <div>
-                                    <button class="action-btn" onclick="alert('Liked!')">👍</button>
-                                    <div class="action-text">${video.likes || 0}</div>
-                                </div>
-                                <div>
-                                    <button class="action-btn" onclick="alert('Comments coming soon!')">💬</button>
-                                    <div class="action-text">0</div>
-                                </div>
-                                <div>
-                                    <button class="action-btn" onclick="copyLink('${video.fileId}')">🔗</button>
-                                    <div class="action-text">Share</div>
-                                </div>
+                            <div class="action-btn" onclick="openComments('${docId}')">
+                                <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg></div>
+                                <span class="action-text">Comment</span>
                             </div>
+                            
+                            <div class="action-btn" onclick="shareShort('${v.title}', '${v.fileId}')">
+                                <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M11.7333 8.26667V4L19.7333 12L11.7333 20V15.6267C6.4 15.6267 2.66667 17.3333 0 21.0667C1.06667 15.7333 4.26667 10.4 11.7333 8.26667Z"/></svg></div>
+                                <span class="action-text">Share</span>
+                            </div>
+                        </div>
+
+                        <div class="bottom-info">
+                            <div class="channel-info">
+                                <div class="channel-avatar">${avatar}</div>
+                                <span class="channel-name">${v.channelName || 'the new tips'}</span>
+                            </div>
+                            <p class="short-title">${v.title}</p>
                         </div>
                     </div>
                 `;
-                shortsFeed.innerHTML += shortHTML;
+                feed.innerHTML += shortHtml;
             });
 
-            setupAutoPlay(); // Play/Pause scroll hone par setup karein
+            // Setup Auto-Play Observer (Jo screen par aayega wahi chalega)
+            setupIntersectionObserver();
+            // Check initial likes state
+            checkAllLikes();
         });
 
-        // Tap karne par aawaz (sound) on/off karne ke liye
-        window.toggleMute = function(videoElement) {
-            videoElement.muted = !videoElement.muted;
-        };
-
-        // Share link copy karne ke liye
-        window.copyLink = function(fileId) {
-            let link = window.location.origin + `/player.html?id=${fileId}`;
-            navigator.clipboard.writeText(link);
-            alert("Share link copied!");
-        };
-
-        // Scroll karne par sirf samne wali video play hogi, baaki pause
-        function setupAutoPlay() {
+        // 2. Auto-Play & Pause Logic
+        function setupIntersectionObserver() {
             const videos = document.querySelectorAll('.short-video');
-            
-            let observer = new IntersectionObserver((entries) => {
+            const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.play().catch(e => console.log("Auto-play blocked by browser, waiting for user tap."));
+                        entry.target.play().catch(e => console.log("Auto-play blocked"));
                     } else {
                         entry.target.pause();
-                        entry.target.currentTime = 0; // Wapas start se shuru karne ke liye
+                        entry.target.currentTime = 0; // Reset video when out of view
                     }
                 });
-            }, { threshold: 0.7 }); // Jab video 70% screen par ho tabhi play ho
+            }, { threshold: 0.6 }); // Jab 60% video dikhe tabhi play karo
 
-            videos.forEach(video => {
-                observer.observe(video);
+            videos.forEach(video => observer.observe(video));
+        }
+
+        // Tap to play/pause
+        function togglePlayPause(videoElement) {
+            if (videoElement.paused) videoElement.play();
+            else videoElement.pause();
+        }
+
+        function checkLogin() {
+            if (!auth.currentUser) { alert("Please login to use this feature!"); return false; }
+            return true;
+        }
+
+        // 3. Working Like Logic
+        function checkAllLikes() {
+            if(!auth.currentUser) return;
+            const uid = auth.currentUser.uid;
+            const likeBtns = document.querySelectorAll('[id^="likeBtn_"]');
+            
+            likeBtns.forEach(btn => {
+                const docId = btn.id.split('_')[1];
+                db.collection("videos").doc(docId).collection("likes").doc(uid).onSnapshot(doc => {
+                    if(doc.exists) btn.classList.add('active', 'liked');
+                    else btn.classList.remove('active', 'liked');
+                });
+            });
+        }
+
+        function toggleShortLike(docId) {
+            if(!checkLogin()) return;
+            const uid = auth.currentUser.uid;
+            const likeRef = db.collection("videos").doc(docId).collection("likes").doc(uid);
+            
+            likeRef.get().then(doc => {
+                if(doc.exists) {
+                    likeRef.delete();
+                    db.collection("videos").doc(docId).update({ likes: firebase.firestore.FieldValue.increment(-1) });
+                    document.getElementById(`likeCount_${docId}`).innerText = parseInt(document.getElementById(`likeCount_${docId}`).innerText) - 1;
+                } else {
+                    likeRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    db.collection("videos").doc(docId).update({ likes: firebase.firestore.FieldValue.increment(1) });
+                    document.getElementById(`likeCount_${docId}`).innerText = parseInt(document.getElementById(`likeCount_${docId}`).innerText) + 1;
+                }
+            });
+        }
+
+        // 4. Working Share Logic
+        function shareShort(title, fileId) {
+            const shareUrl = window.location.origin + '/player.html?id=' + fileId;
+            if (navigator.share) {
+                navigator.share({ title: title, url: shareUrl });
+            } else {
+                alert("Link copied! " + shareUrl);
+            }
+        }
+
+        // 5. Comments Modal Logic
+        let unsubscribeComments = null;
+
+        function openComments(docId) {
+            currentActiveDocId = docId;
+            document.getElementById('commentsModal').classList.add('active');
+            
+            const list = document.getElementById('modalCommentList');
+            list.innerHTML = "<p style='text-align:center;'>Loading comments...</p>";
+
+            // Real-time comments listener
+            unsubscribeComments = db.collection("videos").doc(docId).collection("comments").orderBy("createdAt", "desc").onSnapshot(snap => {
+                document.getElementById('modalCommentCount').innerText = `Comments (${snap.size})`;
+                list.innerHTML = "";
+
+                if(snap.empty) {
+                    list.innerHTML = "<p style='text-align:center; color:#606060;'>Be the first to comment!</p>";
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    let avatarHtml = c.userAvatar ? `<img src="${c.userAvatar}">` : `<div class="c-avatar">${(c.userName || 'U').charAt(0).toUpperCase()}</div>`;
+                    
+                    list.innerHTML += `
+                        <div class="comment-item">
+                            ${avatarHtml}
+                            <div>
+                                <div style="font-size:13px; font-weight:500; color:#0f0f0f;">${c.userName || 'User'}</div>
+                                <div style="font-size:14px; color:#333; margin-top:2px;">${c.commentText}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function closeComments() {
+            document.getElementById('commentsModal').classList.remove('active');
+            if(unsubscribeComments) unsubscribeComments(); // Stop listening to save data
+            currentActiveDocId = null;
+        }
+
+        function postShortComment() {
+            if(!checkLogin() || !currentActiveDocId) return;
+            const input = document.getElementById('shortCommentInput');
+            const text = input.value.trim();
+            if(!text) return;
+
+            db.collection("videos").doc(currentActiveDocId).collection("comments").add({
+                commentText: text,
+                userName: auth.currentUser.displayName || "User",
+                userAvatar: auth.currentUser.photoURL || "",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                input.value = "";
             });
         }
     </script>
