@@ -1,0 +1,14 @@
+<h3>Channel Stats</h3>
+<div id="stats">
+    <p>Total Views: <span id="totalViews">0</span></p>
+    <p>Total Subscribers: <span id="totalSubs">0</span></p>
+</div>
+<script>
+    // Firebase se data lekar display karein
+    db.collection("videos").get().then(snap => {
+        let views = 0;
+        snap.forEach(doc => views += doc.data().views || 0);
+        document.getElementById('totalViews').innerText = views;
+    });
+</script>
+
