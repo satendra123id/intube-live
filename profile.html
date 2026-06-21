@@ -1,22 +1,113 @@
-<div class="profile-header">
-    <img src="logo.png" style="width:100px; border-radius:50%">
-    <h1>The New Tips</h1>
-    <p>Ethical Hacking & Tutorials</p>
-</div>
-<div id="videoGrid" style="display:grid; grid-template-columns: 1fr 1fr;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>the new tips - Profile</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: Roboto, Arial, sans-serif; margin: 0; background: #f9f9f9; padding-bottom: 70px; }
+        
+        /* Cover aur Profile Image styling */
+        .cover-photo { width: 100%; height: 100px; background: #065fd4; object-fit: cover; }
+        .profile-header { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; border-bottom: 1px solid #e5e5e5; text-align: center; }
+        .profile-header img { width: 80px; height: 80px; border-radius: 50%; margin-top: -40px; border: 3px solid #fff; object-fit: cover; background: #ddd; }
+        
+        /* Channel Details */
+        .channel-name { font-size: 22px; font-weight: bold; margin: 10px 0 5px 0; color: #0f0f0f; }
+        .channel-stats { font-size: 14px; color: #606060; margin-bottom: 10px; }
+        .channel-desc { font-size: 14px; color: #0f0f0f; }
+        .section-title { padding: 15px; font-size: 16px; font-weight: bold; margin: 0; background: #f9f9f9; }
+        
+        /* Video Grid Styling */
+        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .video-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
+        .video-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #000; }
+        .video-info { padding: 8px; }
+        .video-title { font-size: 13px; font-weight: 500; margin: 0 0 4px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .video-views { font-size: 12px; color: #606060; }
+        
+        /* Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; }
+        .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="cover-photo"></div>
+
+    <div class="profile-header">
+        <img src="my-studio-pic.jpg" alt="Profile" onerror="this.src='https://via.placeholder.com/100?text=Logo'">
+        
+        <div class="channel-name">the new tips</div>
+        <div class="channel-stats">@thenewtips • <span id="subCount">0</span> subscribers • <span id="videoCount">0</span> videos</div>
+        <div class="channel-desc">Ethical Hacking & Termux Tutorials</div>
     </div>
-<script>
-    db.collection("videos").get().then(snap => {
-        snap.forEach(doc => {
-            let video = doc.data();
-            document.getElementById('videoGrid').innerHTML += `<p>${video.title}</p>`;
+
+    <h3 class="section-title">Uploaded Videos</h3>
+    
+    <div class="video-grid" id="videoGrid">
+        <p style="padding: 10px; color: #606060;">Loading videos...</p>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location='index.html'">🏠<small>Home</small></div>
+        <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
+        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 20px;">➕</div>
+        <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
+        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+            measurementId: "G-944K8C4VM8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Live Subscribers Fetch
+        db.collection("channel_info").doc("myChannel").onSnapshot(doc => {
+            if(doc.exists) {
+                document.getElementById('subCount').innerText = doc.data().subscribers || 0;
+            }
         });
-    });
-</script>
-<div style="position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000;">
-    <div onclick="window.location='index.html'" style="text-align: center; cursor: pointer;">🏠<br><small>Home</small></div>
-    <div onclick="window.location='shorts.html'" style="text-align: center; cursor: pointer;">⚡<br><small>Shorts</small></div>
-    <div onclick="window.location='studio.html'" style="text-align: center; cursor: pointer; font-size: 24px;">➕</div>
-    <div onclick="window.location='subs.html'" style="text-align: center; cursor: pointer;">🔔<br><small>Subs</small></div>
-    <div onclick="window.location='profile.html'" style="text-align: center; cursor: pointer;">👤<br><small>You</small></div>
-</div>
+
+        // 2. Videos Fetch karke Grid mein lagana
+        db.collection("videos").orderBy("uploadedAt", "desc").get().then(snap => {
+            document.getElementById('videoCount').innerText = snap.size; // Total videos count
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = ''; // Loading text hatana
+            
+            if (snap.empty) {
+                grid.innerHTML = '<p style="padding: 10px; color: #606060;">Abhi tak koi video upload nahi ki gayi.</p>';
+                return;
+            }
+
+            snap.forEach(doc => {
+                let video = doc.data();
+                
+                // Video Card create karna, jisse click karke player.html open ho
+                grid.innerHTML += `
+                    <div class="video-card" onclick="window.location='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}'">
+                        <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.src='https://via.placeholder.com/320x180?text=Video'">
+                        <div class="video-info">
+                            <h4 class="video-title">${video.title}</h4>
+                            <div class="video-views">${video.views || 0} views</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }).catch(error => {
+            console.error("Error fetching videos: ", error);
+        });
+    </script>
+</body>
+</html>
