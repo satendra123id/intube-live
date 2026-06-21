@@ -2,154 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intube - Studio Upload</title>
+    <title>Studio - Upload</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-        body { font-family: 'Roboto', sans-serif; background-color: #f9f9f9; margin: 0; padding-bottom: 60px; }
-        .studio-modal { background: #ffffff; max-width: 800px; margin: 20px auto; border-radius: 8px; box-shadow: 0px 5px 15px rgba(0,0,0,0.1); }
-        .modal-header { padding: 20px; border-bottom: 1px solid #e5e5e5; }
-        .modal-header h2 { margin: 0; font-size: 20px; }
-        .upload-area { padding: 60px 20px; text-align: center; }
-        .upload-icon { width: 80px; height: 80px; background: #f2f2f2; border-radius: 50%; margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center; }
-        .upload-icon svg { width: 40px; fill: #909090; }
-        .select-btn { background-color: #065fd4; color: white; border: none; padding: 10px 24px; font-size: 14px; font-weight: 500; border-radius: 2px; cursor: pointer; }
-        input[type="file"] { display: none; }
-        .details-form { display: none; padding: 24px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 12px; color: #606060; margin-bottom: 5px; }
-        .input-group input, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .action-buttons { padding: 16px 24px; border-top: 1px solid #e5e5e5; text-align: right; }
-        .publish-btn { background-color: #065fd4; color: white; border: none; padding: 10px 24px; font-weight: 500; cursor: pointer; display: none; }
-        .status-bar { margin-top: 15px; font-size: 13px; text-align: center; font-weight: bold; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; }
-        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; }
+        body { font-family: Roboto; background: #f9f9f9; padding: 20px; }
+        .box { background: #fff; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
+        button { width: 100%; padding: 10px; background: #065fd4; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <div class="studio-modal">
-        <div class="modal-header"><h2>Upload Video</h2></div>
-        
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg></div>
-            <h3>Select a video file</h3>
-            <input type="file" id="videoInput" accept="video/*" onchange="showDetailsForm()">
-            <button class="select-btn" onclick="document.getElementById('videoInput').click()">Select File</button>
-        </div>
-
-        <div class="details-form" id="detailsForm">
-            <div class="input-group">
-                <label>Title</label>
-                <input type="text" id="videoTitle">
-            </div>
-            <div class="input-group">
-                <label>Description</label>
-                <textarea id="videoDescription"></textarea>
-            </div>
-            <div class="status-bar" id="statusMessage"></div>
-        </div>
-
-        <div class="action-buttons">
-            <button class="publish-btn" id="publishBtn" onclick="uploadVideo()">PUBLISH</button>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item" onclick="window.location='index.html'">🏠<br><small>Home</small></div>
-        <div class="nav-item" onclick="window.location='shorts.html'">⚡<br><small>Shorts</small></div>
-        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 24px;"><b>➕</b></div>
-        <div class="nav-item" onclick="window.location='subs.html'">🔔<br><small>Subs</small></div>
-        <div class="nav-item" onclick="window.location='profile.html'">👤<br><small>You</small></div>
+    <div class="box">
+        <h2>Upload Video</h2>
+        <input type="file" id="videoFile" accept="video/*">
+        <input type="text" id="vTitle" placeholder="Video Title">
+        <textarea id="vDesc" placeholder="Description"></textarea>
+        <button onclick="upload()">Publish</button>
+        <p id="status"></p>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
-            authDomain: "intube-ba578.firebaseapp.com",
-            projectId: "intube-ba578",
-            storageBucket: "intube-ba578.firebasestorage.app",
-            messagingSenderId: "862455398504",
-            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0", authDomain: "intube-ba578.firebaseapp.com", projectId: "intube-ba578", storageBucket: "intube-ba578.firebasestorage.app", messagingSenderId: "862455398504", appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        auth.onAuthStateChanged((user) => {
-            if (!user) {
-                alert("Please login first to upload videos.");
-                window.location.href = "login.html";
-            }
-        });
-
-        function showDetailsForm() {
-            const videoFile = document.getElementById('videoInput').files[0];
-            if (videoFile) {
-                document.getElementById('uploadArea').style.display = 'none';
-                document.getElementById('detailsForm').style.display = 'block';
-                document.getElementById('publishBtn').style.display = 'inline-block';
-                document.getElementById('videoTitle').value = videoFile.name.split('.')[0];
-            }
-        }
-
-        async function uploadVideo() {
-            const currentUser = auth.currentUser;
-            if (!currentUser) return alert("You must be logged in!");
-
-            const videoFile = document.getElementById('videoInput').files[0];
-            const title = document.getElementById('videoTitle').value;
-            const description = document.getElementById('videoDescription').value;
-            const statusText = document.getElementById('statusMessage');
-
-            if (!title) return alert("Title is required!");
-
-            statusText.style.color = "#065fd4";
-            statusText.innerText = "Video Server par upload ho rahi hai... Wait karein...";
-            document.getElementById('publishBtn').disabled = true;
-
+        async function upload() {
+            const user = auth.currentUser;
+            if(!user) return alert("Login karo!");
+            
+            const file = document.getElementById('videoFile').files[0];
             const formData = new FormData();
-            formData.append('video', videoFile);
+            formData.append('video', file);
 
-            try {
-                const response = await fetch('https://intube-backend.onrender.com/upload-video', {
-                    method: 'POST',
-                    body: formData
+            document.getElementById('status').innerText = "Uploading...";
+            
+            const res = await fetch('https://intube-backend.onrender.com/upload-video', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if(data.success) {
+                await db.collection("videos").add({
+                    title: document.getElementById('vTitle').value,
+                    fileId: data.fileId,
+                    uploaderId: user.uid,
+                    channelName: user.displayName || "User",
+                    uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                const data = await response.json();
-                
-                if(data.success) {
-                    statusText.innerText = "Database mein save ho raha hai...";
-                    
-                    // NAYA LOGIC: Ab video asli user ke naam aur ID se save hogi
-                    await db.collection("videos").add({
-                        title: title,
-                        description: description,
-                        fileId: data.fileId,
-                        views: 0,
-                        likes: 0,
-                        uploaderId: currentUser.uid, // Video kiski hai ye fix karne ke liye
-                        uploaderEmail: currentUser.email,
-                        channelName: currentUser.displayName || "User", 
-                        channelAvatar: currentUser.photoURL || "",
-                        uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    statusText.style.color = "green";
-                    statusText.innerText = "Upload Complete! Redireting to Profile...";
-                    setTimeout(() => window.location.href = 'profile.html', 2000);
-                } else {
-                    statusText.style.color = "red";
-                    statusText.innerText = "Upload failed.";
-                }
-            } catch (error) {
-                statusText.style.color = "red";
-                statusText.innerText = "Server error. Try again.";
+                alert("Upload Done!");
+                window.location.href = "profile.html";
             }
-            document.getElementById('publishBtn').disabled = false;
         }
     </script>
 </body>
