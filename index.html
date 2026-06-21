@@ -3,80 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intube - Home</title>
+    <title>Intube - Home | the new tips</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f9f9f9; color: #0f0f0f; padding-bottom: 70px; } 
+        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f9f9f9; padding-bottom: 70px; box-sizing: border-box;} 
         
-        /* Header & Categories */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; position: sticky; top: 0; background: white; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        /* Fixed Header */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; position: sticky; top: 0; background: white; z-index: 1000; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .logo { font-size: 20px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 5px; cursor: pointer; text-decoration: none;}
+        .logo svg { fill: red; width: 26px; height: 26px; }
         
-        /* Smart Search Bar Styling */
-        .search-container { padding: 5px 15px 15px 15px; background: white; border-bottom: 1px solid #e5e5e5; }
-        .search-box { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px; outline: none; box-sizing: border-box; background: #f9f9f9; }
-        .search-box:focus { border: 1px solid #065fd4; }
+        /* Header Right Section (Notification + Avatar) */
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .noti-bell { cursor: pointer; color: #0f0f0f; display: flex; align-items: center; font-size: 22px; position: relative;}
+        .noti-bell::after { content: ''; position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid white;}
+        .channel-avatar { width: 34px; height: 34px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; cursor: pointer; border: 1px solid #ddd;}
+        .channel-avatar img { width: 100%; height: 100%; object-fit: cover;}
 
-        .categories { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: white; white-space: nowrap; border-bottom: 1px solid #e5e5e5; }
+        /* Smart Search Bar Styling */
+        .search-container { padding: 5px 15px 12px 15px; background: white; border-bottom: 1px solid #e5e5e5; }
+        .search-box { width: 100%; padding: 11px 16px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px; outline: none; box-sizing: border-box; background: #f9f9f9; }
+        .search-box:focus { border: 1px solid #065fd4; background: #fff; }
+
+        /* Working Category Tags Styling */
+        .categories { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: white; white-space: nowrap; border-bottom: 1px solid #e5e5e5; scroll-behavior: smooth;}
         .categories::-webkit-scrollbar { display: none; }
-        .category-chip { background: #f2f2f2; padding: 6px 12px; border-radius: 8px; font-size: 14px; border: 1px solid transparent; cursor: pointer; }
+        .category-chip { background: #f2f2f2; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; border: 1px solid transparent; cursor: pointer; transition: 0.2s;}
+        .category-chip:hover { background: #e5e5e5; }
         .category-chip.active { background: #0f0f0f; color: white; }
         
-        /* Video Card Styling */
-        .video-card { margin-bottom: 15px; background: white; cursor: pointer; padding-bottom: 10px; }
-        .thumbnail { width: 100%; aspect-ratio: 16/9; background-color: #111; position: relative; display: flex; justify-content: center; align-items: center; color: white; font-weight: 500; overflow: hidden; }
-        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-        .video-info { display: flex; gap: 12px; padding: 12px 15px 0 15px; }
-        .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; }
-        .video-details { flex-grow: 1; }
-        .video-title { font-size: 16px; font-weight: 500; margin: 0 0 4px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .channel-name { font-size: 12px; color: #606060; margin: 0; }
+        /* Video Grid Styling */
+        .video-grid { display: grid; grid-template-columns: 1fr; gap: 0; padding: 0; margin-top: 5px;}
+        @media(min-width: 600px){ .video-grid { grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; } }
         
-        /* Unified Navigation Bar */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
-        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; }
-        .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
+        /* Video Card Styling */
+        .video-card { margin-bottom: 15px; background: white; cursor: pointer; padding-bottom: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .thumbnail { width: 100%; aspect-ratio: 16/9; background-color: #111; position: relative; display: flex; justify-content: center; align-items: center; color: white; font-weight: 500; overflow: hidden; }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;}
+        .video-card:hover .thumbnail img { transform: scale(1.03); }
+        
+        .video-info { display: flex; gap: 12px; padding: 12px 15px; }
+        .video-details { flex-grow: 1; }
+        .video-title { font-size: 15px; font-weight: 500; margin: 0 0 5px 0; line-height: 1.3; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .channel-name { font-size: 13px; color: #606060; margin: 0; display: flex; align-items: center; gap: 5px; }
+        .video-meta { font-size: 13px; color: #606060; margin: 3px 0 0 0; }
+        
+        /* Bottom Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e5e5e5; z-index: 1000; box-shadow: 0 -1px 3px rgba(0,0,0,0.03); padding-bottom: calc(env(safe-area-inset-bottom) - 10px);}
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; font-size: 20px;}
+        .nav-item small { display: block; font-size: 10px; margin-top: 3px; font-weight: 400;}
+        .nav-item.active { font-weight: 700; }
+        .nav-item.active b { font-size: 22px; }
+        .add-icon { font-size: 26px; font-weight: 400; color: #0f0f0f;}
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo" onclick="window.location='index.html'">
-            <svg viewBox="0 0 24 24" style="fill:red; width: 28px; height: 28px;"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M10,15.464V8.536L16,12L10,15.464z"/></svg>
+        <a href="index.html" class="logo">
+            <svg viewBox="0 0 24 24"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M10,15.464V8.536L16,12L10,15.464z"/></svg>
             Intube
-        </div>
-        <div class="channel-avatar" id="headerAvatar">
-            <span style="font-size: 12px;">...</span>
+        </a>
+        <div class="header-right">
+            <div class="noti-bell" onclick="alert('No new notifications!')">🔔</div>
+            <div class="channel-avatar" id="headerAvatar" onclick="window.location.href='login.html'">
+                <span style="font-size: 14px;">...</span>
+            </div>
         </div>
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-box" placeholder="Search videos (e.g., Termux, Ethical Hacking)..." onkeyup="searchVideos()">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search videos (Termux, Ethical Hacking)..." onkeyup="searchVideos()">
     </div>
 
-    <div class="categories">
-        <div class="category-chip active">All</div>
-        <div class="category-chip">Computer security</div>
-        <div class="category-chip">APIs</div>
-        <div class="category-chip">Ethical Hacking</div>
+    <div class="categories" id="categoryTabs">
+        <div class="category-chip active" onclick="filterByCategory('All')">All</div>
+        <div class="category-chip" onclick="filterByCategory('Computer security')">Computer security</div>
+        <div class="category-chip" onclick="filterByCategory('Termux')">Termux</div>
+        <div class="category-chip" onclick="filterByCategory('Ethical Hacking')">Ethical Hacking</div>
+        <div class="category-chip" onclick="filterByCategory('APIs')">APIs</div>
     </div>
 
-    <div id="videoFeed">
-        <p style="text-align: center; padding: 40px; color: #606060;">Loading videos from database...</p>
+    <div id="videoFeed" class="video-grid">
+        <p style="text-align: center; padding: 50px; color: #606060; grid-column: 1/-1;">Loading awesome videos...</p>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item" onclick="window.location='index.html'"><b>🏠</b><small><b>Home</b></small></div>
-        <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
-        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 24px;">➕</div>
-        <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
-        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
+        <a href="index.html" class="nav-item active"><b>🏠</b><small>Home</small></a>
+        <a href="shorts.html" class="nav-item">⚡<small>Shorts</small></a>
+        <a href="studio.html" class="nav-item add-icon">➕</a>
+        <a href="subs.html" class="nav-item">🔔<small>Subs</small></a>
+        <a href="profile.html" class="nav-item">👤<small>You</small></a>
     </div>
 
     <script>
+        // Exact Working Firebase Config (with tokens)
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
@@ -90,61 +114,91 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // NAYA: User Login State Handle Karna
+        // 1. User Login State & Avatar Handle
         auth.onAuthStateChanged((user) => {
             const avatarDiv = document.getElementById("headerAvatar");
             if (user) {
-                // Agar user logged in hai, toh Google profile photo dikhao
-                avatarDiv.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; object-fit:cover;" onclick="window.location.href='profile.html'">`;
+                if (user.photoURL) {
+                    avatarDiv.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
+                } else {
+                    let initial = user.displayName ? user.displayName.charAt(0).toUpperCase() : '?';
+                    avatarDiv.innerHTML = `<span>${initial}</span>`;
+                }
+                avatarDiv.onclick = () => window.location.href = 'profile.html';
             } else {
-                // Agar login nahi hai, toh Sign In button dikhao
-                avatarDiv.style.background = "transparent";
-                avatarDiv.innerHTML = `<button onclick="window.location.href='login.html'" style="background:#065fd4; color:white; border:none; padding:6px 12px; border-radius:18px; font-weight:500; cursor:pointer; font-size:14px;">Sign In</button>`;
+                avatarDiv.innerHTML = `<span style="font-size: 10px; font-weight:500;">SignIn</span>`;
+                avatarDiv.onclick = () => window.location.href = 'login.html';
             }
         });
 
-        // Search Logic Array
-        let allVideos = [];
+        // Search and Filter Logic Variables
+        let allVideosArray = [];
+        let currentFilter = 'All';
 
-        // Database se data fetch karna
+        // 2. Database se videos fetch karna (orderBy uploadedAt descending)
         db.collection("videos").orderBy("uploadedAt", "desc").onSnapshot((querySnapshot) => {
-            allVideos = []; 
+            allVideosArray = []; 
             querySnapshot.forEach((doc) => {
-                allVideos.push(doc.data());
+                let videoData = doc.data();
+                videoData.id = doc.id; // Firestore ID use karenge
+                allVideosArray.push(videoData);
             });
-            displayVideos(allVideos);
+            // Initial load (default filter is 'All')
+            displayFilteredVideos();
         }, (error) => {
-            console.error("Error fetching videos: ", error);
-            document.getElementById("videoFeed").innerHTML = "<p style='text-align:center; color:red;'>Database error. Check connection.</p>";
+            console.error("Firebase error: ", error);
+            document.getElementById("videoFeed").innerHTML = "<p style='text-align:center; color:red; grid-column: 1/-1;'>Database connection error.</p>";
         });
 
-        // Videos dikhane ka function
-        function displayVideos(videosArray) {
+        // 3. Centralized Display Function (Filters applying logic here)
+        function displayFilteredVideos() {
+            const searchQuery = document.getElementById("searchInput").value.toLowerCase();
             const feed = document.getElementById("videoFeed");
             feed.innerHTML = ""; 
 
-            if(videosArray.length === 0) {
-                feed.innerHTML = "<p style='text-align:center; padding:40px; color:#606060;'>No videos found matching your search.</p>";
+            // 3a. Search filtering logic (Working Fix)
+            let filtered = allVideosArray.filter(video => {
+                const titleMatch = video.title.toLowerCase().includes(searchQuery);
+                
+                // 3b. Category Tag filtering logic (Working Fix)
+                let categoryMatch = true;
+                if (currentFilter !== 'All') {
+                    // Assuming description or title contains category keywords
+                    categoryMatch = (video.title.toLowerCase().includes(currentFilter.toLowerCase())) || 
+                                    (video.description && video.description.toLowerCase().includes(currentFilter.toLowerCase()));
+                }
+                
+                return titleMatch && categoryMatch;
+            });
+
+            if(filtered.length === 0) {
+                feed.innerHTML = "<p style='text-align:center; padding:50px; color:#606060; grid-column: 1/-1;'>No videos found matching your criteria.</p>";
                 return;
             }
 
-            videosArray.forEach((video) => {
+            // 3c. Display logic
+            filtered.forEach((video) => {
+                // Formatting timestamp (relative time handling can be added here)
+                let time = video.uploadedAt ? new Date(video.uploadedAt.toMillis()).toLocaleDateString() : 'Fresh Upload';
+                
+                // Working Channel Avatar handle
+                let avatarHtml = `<div class="channel-avatar" style="width: 36px; height: 36px; margin-top:3px;">
+                                    ${video.channelAvatar ? `<img src="${video.channelAvatar}">` : `<span>${(video.channelName || 'T').charAt(0).toUpperCase()}</span>`}
+                                  </div>`;
+
                 const cardHtml = `
-                    <div class="video-card" onclick="window.location.href='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}'">
+                    <div class="video-card" onclick="window.location.href='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}&uploaderId=${video.uploaderId}'">
                         <div class="thumbnail">
-                            <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: #111;">
-                                ▶ Play Video
-                            </div>
+                            <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.onerror=null; this.src='https://via.placeholder.com/320x180?text=Intube';">
                         </div>
                         <div class="video-info">
-                            <div class="channel-avatar">
-                                <img src="my-studio-pic.jpg" onerror="this.style.display='none'; this.parentNode.innerText='T';">
-                            </div>
+                            ${avatarHtml}
                             <div class="video-details">
                                 <h3 class="video-title">${video.title}</h3>
-                                <p class="channel-name">the new tips</p>
-                                <p style="font-size:12px; color:#606060; margin:2px 0 0 0;">${video.views || 0} views • Fresh Upload</p>
+                                <p class="channel-name">${video.channelName || 'the new tips'}
+                                    <svg viewBox="0 0 24 24" style="fill:#606060; width:12px; height:12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                                </p>
+                                <p class="video-meta">${video.views || 0} views • ${time}</p>
                             </div>
                         </div>
                     </div>
@@ -153,13 +207,21 @@
             });
         }
 
-        // Search Function
+        // 4. Search function called on keyup (Fixed)
         function searchVideos() {
-            const searchQuery = document.getElementById("searchInput").value.toLowerCase();
-            const filteredVideos = allVideos.filter((video) => {
-                return video.title.toLowerCase().includes(searchQuery);
-            });
-            displayVideos(filteredVideos);
+            displayFilteredVideos(); // Just call centralized function
+        }
+
+        // 5. Category filter function (Fixed)
+        function filterByCategory(category) {
+            currentFilter = category; // Update current filter
+            
+            // Update active state in UI
+            const chips = document.querySelectorAll('.category-chip');
+            chips.forEach(chip => chip.classList.remove('active'));
+            event.target.classList.add('active'); // Current targeted chip active
+
+            displayFilteredVideos(); // Recall centralized display
         }
     </script>
 </body>
