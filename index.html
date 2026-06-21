@@ -10,7 +10,7 @@
         
         /* Header & Categories */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; position: sticky; top: 0; background: white; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 5px; }
+        .logo { font-size: 20px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 5px; cursor: pointer; }
         
         /* Smart Search Bar Styling */
         .search-container { padding: 5px 15px 15px 15px; background: white; border-bottom: 1px solid #e5e5e5; }
@@ -28,7 +28,6 @@
         .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
         .video-info { display: flex; gap: 12px; padding: 12px 15px 0 15px; }
         .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; }
-        .channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .video-details { flex-grow: 1; }
         .video-title { font-size: 16px; font-weight: 500; margin: 0 0 4px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .channel-name { font-size: 12px; color: #606060; margin: 0; }
@@ -40,17 +39,17 @@
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo">
+        <div class="logo" onclick="window.location='index.html'">
             <svg viewBox="0 0 24 24" style="fill:red; width: 28px; height: 28px;"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M10,15.464V8.536L16,12L10,15.464z"/></svg>
             Intube
         </div>
-        <div class="channel-avatar">
-            <img src="my-studio-pic.jpg" onerror="this.style.display='none'; this.parentNode.innerText='T';">
+        <div class="channel-avatar" id="headerAvatar">
+            <span style="font-size: 12px;">...</span>
         </div>
     </div>
 
@@ -89,25 +88,37 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // NAYA: Ek array banaya taaki data save rahe aur search karna aasaan ho
+        // NAYA: User Login State Handle Karna
+        auth.onAuthStateChanged((user) => {
+            const avatarDiv = document.getElementById("headerAvatar");
+            if (user) {
+                // Agar user logged in hai, toh Google profile photo dikhao
+                avatarDiv.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; object-fit:cover;" onclick="window.location.href='profile.html'">`;
+            } else {
+                // Agar login nahi hai, toh Sign In button dikhao
+                avatarDiv.style.background = "transparent";
+                avatarDiv.innerHTML = `<button onclick="window.location.href='login.html'" style="background:#065fd4; color:white; border:none; padding:6px 12px; border-radius:18px; font-weight:500; cursor:pointer; font-size:14px;">Sign In</button>`;
+            }
+        });
+
+        // Search Logic Array
         let allVideos = [];
 
         // Database se data fetch karna
         db.collection("videos").orderBy("uploadedAt", "desc").onSnapshot((querySnapshot) => {
-            allVideos = []; // Purana data clear karein
+            allVideos = []; 
             querySnapshot.forEach((doc) => {
                 allVideos.push(doc.data());
             });
-            
-            // Shuru mein saari videos dikhayein
             displayVideos(allVideos);
         }, (error) => {
             console.error("Error fetching videos: ", error);
             document.getElementById("videoFeed").innerHTML = "<p style='text-align:center; color:red;'>Database error. Check connection.</p>";
         });
 
-        // Videos ko screen par dikhane ka function
+        // Videos dikhane ka function
         function displayVideos(videosArray) {
             const feed = document.getElementById("videoFeed");
             feed.innerHTML = ""; 
@@ -142,17 +153,12 @@
             });
         }
 
-        // NAYA: Search Function
+        // Search Function
         function searchVideos() {
-            // User ne jo type kiya hai use lein aur chhote aksharon (lowercase) mein badal dein
             const searchQuery = document.getElementById("searchInput").value.toLowerCase();
-            
-            // allVideos array ko filter karein
             const filteredVideos = allVideos.filter((video) => {
                 return video.title.toLowerCase().includes(searchQuery);
             });
-
-            // Filter ki gayi videos ko screen par dikhayein
             displayVideos(filteredVideos);
         }
     </script>
