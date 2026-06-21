@@ -1,0 +1,15 @@
+<div class="profile-header">
+    <img src="logo.png" style="width:100px; border-radius:50%">
+    <h1>The New Tips</h1>
+    <p>Ethical Hacking & Tutorials</p>
+</div>
+<div id="videoGrid" style="display:grid; grid-template-columns: 1fr 1fr;">
+    </div>
+<script>
+    db.collection("videos").get().then(snap => {
+        snap.forEach(doc => {
+            let video = doc.data();
+            document.getElementById('videoGrid').innerHTML += `<p>${video.title}</p>`;
+        });
+    });
+</script>
