@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Playing - Intube | the new tips</title>
+    <title>Playing - Intube</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -11,67 +11,52 @@
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         body { font-family: 'Roboto', sans-serif; margin: 0; background: #f9f9f9; color: #0f0f0f;}
         
-        /* Fixed Video Container (Professional Style) */
         .fixed-player { width: 100%; aspect-ratio: 16/9; background: #000; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);}
         .fixed-player video { width: 100%; height: 100%; object-fit: contain; }
 
-        /* Content Info Styling */
         .content-info { padding: 12px 15px; background: #fff; border-bottom: 1px solid #e5e5e5; }
         .video-title { font-size: 18px; font-weight: 500; margin: 0 0 5px 0; line-height: 1.4; color: #0f0f0f;}
         .video-meta { font-size: 13px; color: #606060; margin: 0 0 12px 0; }
 
-        /* Action Buttons Bar (Like, Sub, Share, Save, Download - FULL) */
         .action-bar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid #f2f2f2; padding-bottom: 12px; overflow-x: auto; white-space: nowrap;}
         .action-bar::-webkit-scrollbar { display: none; }
-        .action-btn { background: #f2f2f2; border: 1px solid #f2f2f2; padding: 7px 15px; border-radius: 20px; font-size: 13px; font-weight: 500; color: #0f0f0f; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;}
-        .action-btn:hover { background: #e5e5e5; border-color: #ddd; }
+        .action-btn { background: #f2f2f2; border: 1px solid #f2f2f2; padding: 7px 15px; border-radius: 20px; font-size: 13px; font-weight: 500; color: #0f0f0f; cursor: pointer; display: flex; align-items: center; gap: 6px;}
         .action-btn.active { background: #065fd4; color: #fff; border-color: #065fd4; }
-        .action-btn svg { fill: #0f0f0f; width: 16px; height: 16px; transition: 0.2s;}
+        .action-btn svg { fill: #0f0f0f; width: 16px; height: 16px;}
         .action-btn.active svg { fill: #fff; }
-
-        /* Download Button Specific (Working Direct Link handle) */
         .download-btn { background: #22c55e; color: #fff; border-color: #16a34a; font-weight: 700;}
-        .download-btn:hover { background: #16a34a; }
         .download-btn svg { fill: #fff; }
 
-        /* Channel Box Styling */
         .channel-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; border-bottom: 1px solid #e5e5e5; padding-bottom: 12px; margin-bottom: 15px; }
-        .channel-info { display: flex; align-items: center; gap: 12px; cursor: pointer;}
+        .channel-info { display: flex; align-items: center; gap: 12px;}
         .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden;}
         .channel-avatar img { width: 100%; height: 100%; object-fit: cover;}
-        .channel-details { }
         .channel-name { font-size: 15px; font-weight: 500; margin: 0; color: #0f0f0f; }
         .sub-count { font-size: 12px; color: #606060; margin: 2px 0 0 0;}
-        .sub-btn { background: #0f0f0f; color: white; border: none; padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s;}
+        .sub-btn { background: #0f0f0f; color: white; border: none; padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;}
         .sub-btn.subscribed { background: #f2f2f2; color: #0f0f0f; font-weight: 400; }
 
-        /* Comments Section Styling (Working Realtime) */
         .comments-section { padding: 0 15px; background: #fff; margin-top: 10px; border-radius: 8px 8px 0 0; }
         .comments-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e5e5e5; }
         .comments-header h3 { margin: 0; font-size: 16px; font-weight: 500; }
         .comment-input-box { display: flex; gap: 10px; margin: 15px 0 20px 0; }
         .comment-input-box input { flex-grow: 1; padding: 11px 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; background: #f9f9f9; }
-        .comment-input-box input:focus { border: 1px solid #065fd4; background: #fff; }
-        .post-btn { background: #065fd4; color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s;}
-        .post-btn:hover { background: #0550b1; }
-        #commentList { margin-bottom: 30px;}
+        .post-btn { background: #065fd4; color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;}
         .comment-item { display: flex; gap: 12px; margin-bottom: 18px; }
-        .comment-avatar { width: 34px; height: 34px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; margin-top: 3px;}
-        .comment-user-avatar { width:100%; height:100%; object-fit:cover; }
+        .comment-avatar { width: 34px; height: 34px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden;}
         .comment-user { font-weight: 500; font-size: 13px; color: #0f0f0f; margin-right: 8px;}
-        .comment-time { font-size: 11px; color: #606060;}
         .comment-text { font-size: 14px; color: #0f0f0f; margin: 4px 0 0 0; line-height: 1.4; }
     </style>
 </head>
 <body>
 
     <div class="fixed-player">
-        <video id="videoPlayer" controls autoplay muted playsinline onerror="handleError()"></video>
+        <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
     <div class="content-info">
-        <h1 class="video-title" id="videoTitle">Loading...</h1>
-        <p class="video-meta"><span id="viewCount">0</span> views • <span id="uploadTime">SYSTEM Fresh</span></p>
+        <h1 class="video-title" id="videoTitle">Loading Video...</h1>
+        <p class="video-meta"><span id="viewCount">0</span> views • the new tips</p>
         
         <div class="action-bar">
             <div class="action-btn" id="likeBtn" onclick="likeVideo()">
@@ -101,12 +86,10 @@
         </div>
 
         <div class="channel-box">
-            <div class="channel-info" onclick="alert('Channel page link later')">
-                <div class="channel-avatar" id="channelAvatar">
-                    <span style="font-size: 18px;">...</span>
-                </div>
+            <div class="channel-info">
+                <div class="channel-avatar" id="channelAvatar"><span>T</span></div>
                 <div class="channel-details">
-                    <h2 class="channel-name" id="channelName">Fetching...</h2>
+                    <h2 class="channel-name" id="channelName">the new tips</h2>
                     <p class="sub-count"><span id="channelSubs">0</span> subscribers</p>
                 </div>
             </div>
@@ -117,223 +100,221 @@
     <div class="comments-section">
         <div class="comments-header">
             <h3>Comments (<span id="commentCount">0</span>)</h3>
-            <span style="font-size: 14px; color:#606060;">⬇ Newest</span>
         </div>
         
         <div class="comment-input-box">
-            <div class="comment-avatar" style="width: 38px; height: 38px; margin-top:0;" id="userCommentAvatar"><span>?</span></div>
-            <input type="text" id="commentInput" placeholder="Add a public comment..." onfocus="checkLogin()">
-            <button class="post-btn" id="postBtn" onclick="postComment()" disabled>Post</button>
+            <input type="text" id="commentInput" placeholder="Add a public comment...">
+            <button class="post-btn" id="postBtn" onclick="postComment()">Post</button>
         </div>
         
         <div id="commentList">
-            <p style="text-align: center; color: #606060; padding: 20px;">Loading comments realtime...</p>
+            <p style="text-align: center; color: #606060; padding: 20px;">Loading comments...</p>
         </div>
     </div>
 
     <script>
-        // Exactly same working tokens/config jisake bina nahi chal sakata (Fixed Full)
+        // Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
             projectId: "intube-ba578",
             storageBucket: "intube-ba578.firebasestorage.app",
             messagingSenderId: "862455398504",
-            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
-            measurementId: "G-944K8C4VM8"
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // 1. Get Params from URL
+        // URL Parameters
         const params = new URLSearchParams(window.location.search);
-        const videoFileId = params.get('id'); // Token for streaming backend link handle
+        const videoFileId = params.get('id') || params.get('fileId'); 
         const videoTitleParam = decodeURIComponent(params.get('title') || 'Playing Video');
-        let currentUploaderId = null; // Important link kisake me dawnload/sub wark kare fix
+        
+        let videoDocId = null; // Global variables jo features chalayenge
+        let currentUploaderId = null; 
 
-        // 2. Initialize Page Content and Working Direct streaming Backend Link
-        if(!videoFileId){
-            handleError();
-        } else {
-            // Set Titles (design professional fixing full full full)
+        // 1. Play the Video (Ye turant chalega)
+        if (videoFileId) {
+            document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoFileId}`;
             document.getElementById('videoTitle').innerText = videoTitleParam;
-            document.title = videoTitleParam + ' - Intube | the new tips';
-            
-            // Set working streaming backend link (tokenized Link fix Full full)
-            const backendStreamUrl = `https://intube-backend.onrender.com/stream/${videoFileId}`;
-            document.getElementById('videoPlayer').src = backendStreamUrl;
-            
-            // REALTIME fetches logic shuru fix full Full full
-            fetchVideoMetadata();
-            fetchRealtimeComments();
-        }
+            document.title = videoTitleParam;
 
-        // 3a. Realtime Video Data fetching system jisake bina nahi chal sakata (likes Count, uploaderId fetch)
-        function fetchVideoMetadata() {
-            // Find Video Document by fileId
-            db.collection("videos").where("fileId", "==", videoFileId).onSnapshot((snap) => {
-                if(!snap.empty){
+            // 2. Fetch Video Metadata (Smart logic to fix the "Loading..." bug)
+            // 'in' query dono Number aur String format ko support karti hai, isliye ab video hang nahi hogi
+            db.collection("videos").where("fileId", "in", [videoFileId, Number(videoFileId), String(videoFileId)]).onSnapshot((snap) => {
+                if (!snap.empty) {
                     const doc = snap.docs[0];
+                    videoDocId = doc.id; // Asli ID mil gayi!
                     const video = doc.data();
-                    currentUploaderId = video.uploaderId; // Link important Full full
-                    
-                    // Update metadata UI full fix
+                    currentUploaderId = video.uploaderId;
+
+                    // Update UI info
                     document.getElementById('likeCount').innerText = video.likes || 0;
                     document.getElementById('viewCount').innerText = video.views || 0;
-                    
-                    // Channel box logic working setup Full full full
-                    setupChannelBox(video);
-                    
-                    // check if already liked full working
-                    checkIfUserLiked(doc.id);
+                    document.getElementById('channelName').innerText = video.channelName || "the new tips";
+
+                    if(video.channelAvatar){
+                        document.getElementById('channelAvatar').innerHTML = `<img src="${video.channelAvatar}">`;
+                    }
+
+                    // Subscriber count lana
+                    if(currentUploaderId){
+                        db.collection("users").doc(currentUploaderId).onSnapshot(uDoc => {
+                            if(uDoc.exists) document.getElementById('channelSubs').innerText = uDoc.data().subscribers || 0;
+                        });
+                        checkSubStatus();
+                    }
+
+                    // Comments load karna shuru karein
+                    loadCommentsRealtime();
+                } else {
+                    document.getElementById('commentList').innerHTML = "<p style='text-align:center;'>Details fetching failed but video is playing.</p>";
                 }
             });
         }
-        
-        // 3b. Setup Channel Box (Working Subscribe Full design professional) Full full full
-        function setupChannelBox(video) {
-            // Design channel avatar full Working
-            const chanAvatarDiv = document.getElementById('channelAvatar');
-            if(video.channelAvatar){
-                chanAvatarDiv.innerHTML = `<img src="${video.channelAvatar}" alt="C">`;
-            } else {
-                let initial = (video.channelName || 'T').charAt(0).toUpperCase();
-                chanAvatarDiv.innerHTML = `<span>${initial}</span>`;
+
+        // --- ALL FEATURES WORKING LOGIC ---
+
+        function checkLogin() {
+            if (!auth.currentUser) {
+                alert("Please login to use this feature!");
+                return false;
             }
-            // Channel Name Full design
-            document.getElementById('channelName').innerText = video.channelName || 'the new tips';
-            
-            // Check Subscribe status working link full full Full Full full Full full
-            if(currentUploaderId){
-                db.collection("users").doc(currentUploaderId).onSnapshot(doc => {
-                   if(doc.exists){
-                       document.getElementById('channelSubs').innerText = doc.data().subscribers || 0;
-                   } 
-                });
-                checkSubscribeStatus();
-            }
+            return true;
         }
 
-        // 4. Working interaction full features add karo FULL Full full FULL full
-        
-        // 4a. Working Like logic full Full FULL full Full Full FULL full full Full FULL full Full Full Full Full FULL
+        // 1. Like Feature
         function likeVideo() {
-            if(!checkLogin()){return;}
-            const videoIdDoc = params.get('fileDocId') || videoFileId; // assuming unique ID handle or find it
-            // Need unique DocID, we will find by fileId filtering full Full FULL full Full Full FULL full full Full
-            db.collection("videos").where("fileId", "==", videoFileId).get().then(snap => {
-                if(!snap.empty){
-                    const docId = snap.docs[0].id;
-                    const uVal = auth.currentUser.uid + "_" + docId;
-                    
-                    // Simple working realtime increment फुल FULL
-                    db.collection("videos").doc(docId).update({
-                        likes: firebase.firestore.FieldValue.increment(1)
-                    });
-                    document.getElementById('likeBtn').classList.add('active');
-                }
+            if (!checkLogin() || !videoDocId) return;
+            db.collection("videos").doc(videoDocId).update({
+                likes: firebase.firestore.FieldValue.increment(1)
             });
+            document.getElementById('likeBtn').classList.add('active');
         }
-        function checkIfUserLiked(docId) { /* logic to check unique likes add feature позже Full full FULL */ }
 
-        // 4b. Working Share full feature navigator mediator link full FULL फुल Full full FULL
+        // 2. Share Feature
         function shareVideo() {
             if (navigator.share) {
                 navigator.share({
                     title: videoTitleParam,
-                    text: 'Check out this video on Intube: the new tips',
                     url: window.location.href,
-                }).then(() => {console.log('Thanks for sharing!');}).catch((error) => console.log('Error sharing', error));
+                });
             } else {
-                alert("Share not supported. Copy Link: " + window.location.href);
+                alert("Link copied! " + window.location.href);
             }
         }
-        
-        // 4c. Working Save to Watch Later link important Full FULL फुल Full full FULL full
+
+        // 3. Save Feature (Watch Later)
         function saveVideo() {
-            if(!checkLogin()){return;}
+            if (!checkLogin() || !videoDocId) return;
             db.collection("users").doc(auth.currentUser.uid).collection("watchLater").add({
                 fileId: videoFileId,
                 title: videoTitleParam,
-                uploaderId: currentUploaderId,
                 savedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                alert("Saved to Watch Later playlist full fix full!");
                 document.getElementById('saveBtn').classList.add('active');
                 document.getElementById('saveText').innerText = "Saved";
             });
         }
 
-        // 4d. Working Download Direct streaming Backend Link wichtig link Full FULL फुल Full full FULL full
+        // 4. Download Feature
         function downloadVideo() {
-            if(!checkLogin()){return;}
-            // As user requested direct direct direct direct working dawnload Full full full
-            const dawnloadBackendLink = `https://intube-backend.onrender.com/stream/${videoFileId}`;
-            // We create temporary dynamic anchor link with download attribute important handle full FULL फुल Full
-            const anchorDawn = document.createElement('a');
-            anchorDawn.href = dawnloadBackendLink;
-            anchorDawn.target = "_blank"; // Important link open full fix Full full
-            anchorDawn.download = videoTitleParam.replace(/\s+/g, '_') + '.mp4'; // Suggested filename important link Full full FULL
-            document.body.appendChild(anchorDawn);
-            anchorDawn.click(); // Important handling full fix Full full
-            document.body.removeChild(anchorDawn); // Important link Full full FULL फुल Full
-            
-            alert("Streaming link backend handled Full. If download doesn't start automatic handle, please right-click on video in new tab and save Full full Full full!");
+            if (!videoFileId) return;
+            const a = document.createElement('a');
+            a.href = `https://intube-backend.onrender.com/stream/${videoFileId}`;
+            a.target = "_blank";
+            a.download = "Intube_Video.mp4";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
-        // 4e. Working Subscribe full features full link FULL full full Full FULL
+        // 5. Subscribe Feature
         function toggleSubscribe() {
-            if(!checkLogin()){return;}
-            if(!currentUploaderId) return;
-            if(currentUploaderId === auth.currentUser.uid) { alert("You can't subscribe yourself full fix!"); return;}
+            if (!checkLogin() || !currentUploaderId) return;
+            if (currentUploaderId === auth.currentUser.uid) { alert("You can't subscribe to yourself!"); return; }
 
-            const uploaderSubDoc = db.collection("users").doc(auth.currentUser.uid).collection("subscriptions").doc(currentUploaderId);
-            
-            uploaderSubDoc.get().then(docSnap => {
-                const subBtn = document.getElementById('subBtn');
-                if(docSnap.exists){
-                    // Phele se Subscribed full logic add FULL Full full Full FULL
-                    uploaderSubDoc.delete().then(() => {
-                        // Decrement creator sub count wichtig logic important link Full FULL फुल Full full FULL full
-                        db.collection("users").doc(currentUploaderId).update({
-                            subscribers: firebase.firestore.FieldValue.increment(-1)
-                        });
-                        subBtn.innerText = "Subscribe";
-                        subBtn.classList.remove('subscribed');
+            const subRef = db.collection("users").doc(auth.currentUser.uid).collection("subscriptions").doc(currentUploaderId);
+            const btn = document.getElementById('subBtn');
+
+            subRef.get().then(doc => {
+                if (doc.exists) {
+                    subRef.delete().then(() => {
+                        db.collection("users").doc(currentUploaderId).update({ subscribers: firebase.firestore.FieldValue.increment(-1) });
+                        btn.innerText = "Subscribe";
+                        btn.classList.remove('subscribed');
                     });
                 } else {
-                    // Subscribe logic logic add FULL Full full Full FULL full full Full FULL full full Full FULL full
-                    uploaderSubDoc.set({subscribedAt: firebase.firestore.FieldValue.serverTimestamp()}).then(() => {
-                       // Increment creator sub count wichtig logic Full FULL ফুল Full full FULL full Full FULL 풀 Full
-                        db.collection("users").doc(currentUploaderId).update({
-                            subscribers: firebase.firestore.FieldValue.increment(1)
-                        }, {merge: true});
-                        subBtn.innerText = "Subscribed";
-                        subBtn.classList.add('subscribed');
-                        alert("Subscribed to " + document.getElementById('channelName').innerText + " full fix full Full!");
+                    subRef.set({ subscribedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
+                        db.collection("users").doc(currentUploaderId).update({ subscribers: firebase.firestore.FieldValue.increment(1) });
+                        btn.innerText = "Subscribed";
+                        btn.classList.add('subscribed');
                     });
                 }
             });
         }
-        function checkSubscribeStatus() {
-            if(!auth.currentUser || !currentUploaderId) return;
-            db.collection("users").doc(auth.currentUser.uid).collection("subscriptions").doc(currentUploaderId).get().then(doc => {
-                if(doc.exists){
-                    const subBtn = document.getElementById('subBtn');
-                    subBtn.innerText = "Subscribed";
-                    subBtn.classList.add('subscribed');
+
+        function checkSubStatus() {
+            if(auth.currentUser && currentUploaderId) {
+                db.collection("users").doc(auth.currentUser.uid).collection("subscriptions").doc(currentUploaderId).get().then(doc => {
+                    if(doc.exists) {
+                        const btn = document.getElementById('subBtn');
+                        btn.innerText = "Subscribed";
+                        btn.classList.add('subscribed');
+                    }
+                });
+            }
+        }
+
+        // 6. Comments Feature (Realtime Load)
+        function loadCommentsRealtime() {
+            if(!videoDocId) return;
+            db.collection("videos").doc(videoDocId).collection("comments").orderBy("createdAt", "desc").onSnapshot(snap => {
+                const list = document.getElementById('commentList');
+                document.getElementById('commentCount').innerText = snap.size;
+                list.innerHTML = "";
+
+                if(snap.empty) {
+                    list.innerHTML = "<p style='text-align:center; color:#606060;'>No comments yet.</p>";
+                    return;
                 }
+
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    let avatar = c.userAvatar ? `<img src="${c.userAvatar}" style="width:100%;height:100%;object-fit:cover;">` : `<span>${(c.userName || 'U').charAt(0).toUpperCase()}</span>`;
+                    list.innerHTML += `
+                        <div class="comment-item">
+                            <div class="comment-avatar">${avatar}</div>
+                            <div>
+                                <p class="comment-user" style="margin:0;">${c.userName || 'User'}</p>
+                                <p class="comment-text">${c.commentText}</p>
+                            </div>
+                        </div>
+                    `;
+                });
             });
         }
 
-        // 5. Working comments Realtime full features add Full design professional logic (Realtime Realtime Realtime logic fix Full full FULL फुल Full full FULL full)
-        
-        // Input enable logic tärke feature ważna funkcja penting fitur muhimu handled full FULL ফুল Full full FULL
-        document.getElementById('commentInput').addEventListener('input', (e) => {
-           document.getElementById('postBtn').disabled = (e.target.value.trim().length === 0);
-        });
+        // 7. Post Comment
+        function postComment() {
+            if (!checkLogin() || !videoDocId) return;
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if(!text) return;
 
-        // working comments realtime fetch full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full Full
-        function fetchRealtimeComments() {
-            // realtime realtime realtime realtime logic ważna Full FULL फुल Full full FULL full Full F
+            document.getElementById('postBtn').innerText = "...";
+            db.collection("videos").doc(videoDocId).collection("comments").add({
+                commentText: text,
+                userName: auth.currentUser.displayName || "User",
+                userAvatar: auth.currentUser.photoURL || "",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                input.value = "";
+                document.getElementById('postBtn').innerText = "Post";
+            });
+        }
+    </script>
+</body>
+</html>
+
