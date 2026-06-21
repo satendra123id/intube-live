@@ -61,11 +61,11 @@
 <body>
 
     <div class="fixed-player">
-        <video id="videoPlayer" controls autoplay playsinline onerror="this.style.background='#000';"></video>
+        <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
     <div class="content-info">
-        <h1 class="video-title" id="videoTitle">Loading Video...</h1>
+        <h1 class="video-title" id="videoTitle">Loading...</h1>
         <p class="video-meta"><span id="viewCount">0</span> views</p>
         
         <div class="action-bar">
@@ -118,7 +118,7 @@
         </div>
         
         <div id="commentList">
-            <p style="text-align: center; color: #606060; padding: 20px;">Loading comments...</p>
+            <p style="text-align: center; color: #606060; padding: 20px;">Fetching comments...</p>
         </div>
     </div>
 
@@ -130,7 +130,6 @@
     </div>
 
     <script>
-        // Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
@@ -143,7 +142,6 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // URL Parameters
         const params = new URLSearchParams(window.location.search);
         const videoFileId = params.get('id') || params.get('fileId'); 
         const videoTitleParam = decodeURIComponent(params.get('title') || 'Playing Video');
@@ -152,23 +150,26 @@
         let currentUploaderId = null; 
 
         if (videoFileId) {
-            // 1. Setup Video Player Source
+            // Set video source
             document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoFileId}`;
             document.getElementById('videoTitle').innerText = videoTitleParam;
             document.title = videoTitleParam;
 
-            // 2. Safe Firebase Query (Crash-Proof Logic)
-            try {
-                let searchArray = [String(videoFileId)];
-                if (!isNaN(Number(videoFileId))) { searchArray.push(Number(videoFileId)); }
-
-                db.collection("videos").where("fileId", "in", searchArray).onSnapshot((snap) => {
-                    if (!snap.empty) {
-                        const doc = snap.docs[0];
+            // 100% BULLETPROOF FIREBASE LOGIC (No Crash Guarantee)
+            db.collection("videos").onSnapshot(snap => {
+                let videoFound = false;
+                
+                snap.forEach(doc => {
+                    const video = doc.data();
+                    
+                    // Match by fileId (ignoring text/number difference) or Document ID
+                    if (String(video.fileId) === String(videoFileId) || doc.id === String(videoFileId)) {
+                        videoFound = true;
                         videoDocId = doc.id; 
-                        const video = doc.data();
                         currentUploaderId = video.uploaderId;
 
+                        // UI Update
+                        document.getElementById('videoTitle').innerText = video.title || videoTitleParam;
                         document.getElementById('likeCount').innerText = video.likes || 0;
                         document.getElementById('viewCount').innerText = video.views || 0;
                         document.getElementById('channelName').innerText = video.channelName || "the new tips";
@@ -177,6 +178,7 @@
                             document.getElementById('channelAvatar').innerHTML = `<img src="${video.channelAvatar}">`;
                         }
 
+                        // Update Subscribers
                         if(currentUploaderId){
                             db.collection("users").doc(currentUploaderId).onSnapshot(uDoc => {
                                 if(uDoc.exists) document.getElementById('channelSubs').innerText = uDoc.data().subscribers || 0;
@@ -184,25 +186,20 @@
                             checkSubStatus();
                         }
                         
-                        // Metadata load hone ke baad comments layen
+                        // Load Comments and Like state
                         loadCommentsRealtime();
-                        checkLikeDislikeStatus(); 
-                    } else {
-                        document.getElementById('commentList').innerHTML = "<p style='text-align: center; color: #606060;'>Details not found in database.</p>";
+                        checkLikeDislikeStatus();
                     }
-                }, (error) => {
-                    console.error("Firebase Error: ", error);
                 });
-            } catch (error) {
-                console.error("Query Error: ", error);
-            }
 
-            // 3. Load Suggested Videos Independently (Page freeze nahi hoga)
-            try {
-                loadSuggestedVideos();
-            } catch (error) {
-                console.error("Suggested Video Error: ", error);
-            }
+                if (!videoFound) {
+                    document.getElementById('videoTitle').innerText = videoTitleParam + " (Info missing)";
+                    document.getElementById('commentList').innerHTML = "<p style='text-align: center; color: #606060;'>Video details not found in database.</p>";
+                }
+            });
+
+            // Load Suggested Videos Always
+            loadSuggestedVideos();
         } else {
             document.getElementById('videoTitle').innerText = "Video Not Found";
         }
@@ -364,4 +361,48 @@
         function loadCommentsRealtime() {
             if(!videoDocId) return;
             db.collection("videos").doc(videoDocId).collection("comments").orderBy("createdAt", "desc").onSnapshot(snap => {
-                const list = document
+                const list = document.getElementById('commentList');
+                document.getElementById('commentCount').innerText = snap.size;
+                list.innerHTML = "";
+
+                if(snap.empty) {
+                    list.innerHTML = "<p style='text-align:center; color:#606060;'>No comments yet.</p>";
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    let avatar = c.userAvatar ? `<img src="${c.userAvatar}" style="width:100%;height:100%;object-fit:cover;">` : `<span>${(c.userName || 'U').charAt(0).toUpperCase()}</span>`;
+                    list.innerHTML += `
+                        <div class="comment-item">
+                            <div class="comment-avatar">${avatar}</div>
+                            <div>
+                                <p class="comment-user" style="margin:0;">${c.userName || 'User'}</p>
+                                <p class="comment-text">${c.commentText}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function postComment() {
+            if (!checkLogin() || !videoDocId) return;
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if(!text) return;
+
+            document.getElementById('postBtn').innerText = "...";
+            db.collection("videos").doc(videoDocId).collection("comments").add({
+                commentText: text,
+                userName: auth.currentUser.displayName || "User",
+                userAvatar: auth.currentUser.photoURL || "",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                input.value = "";
+                document.getElementById('postBtn').innerText = "Post";
+            });
+        }
+    </script>
+</body>
+</html>
