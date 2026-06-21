@@ -2,20 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player - Intube</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: Roboto; margin: 0; background: #fff; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; background: #fff; }
         .video-container { width: 100%; aspect-ratio: 16/9; background: #000; }
         .info { padding: 15px; }
         .title { font-size: 18px; font-weight: bold; margin: 0; }
-        .actions { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .action-btn { cursor: pointer; font-size: 14px; font-weight: 500; }
+        .actions { display: flex; gap: 20px; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .action-btn { cursor: pointer; font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
         .comments { padding: 15px; }
-        input { width: 80%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .comment-item { margin-bottom: 10px; font-size: 14px; }
+        .comment-input-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #065fd4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .comment-item { margin-bottom: 15px; font-size: 14px; }
+        .comment-user { font-weight: bold; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -28,62 +32,83 @@
     <h2 class="title" id="videoTitle">Loading...</h2>
     <div class="actions">
         <span class="action-btn" onclick="likeVideo()">👍 <span id="likeCount">0</span></span>
-        <span class="action-btn" onclick="subscribe()">🔔 Subscribe</span>
+        <span class="action-btn">🔔 Subscribe</span>
     </div>
 </div>
 
 <div class="comments">
     <h3>Comments</h3>
-    <input type="text" id="commentInput" placeholder="Add a comment...">
-    <button onclick="postComment()">Post</button>
-    <div id="commentList" style="margin-top: 15px;"></div>
+    <div class="comment-input-box">
+        <input type="text" id="commentInput" placeholder="Add a comment...">
+        <button onclick="postComment()">Post</button>
+    </div>
+    <div id="commentList"></div>
 </div>
 
 <script>
-    const firebaseConfig = { /* Apna Config Yahan Dalen */ };
+    // Aapki Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+        authDomain: "intube-ba578.firebaseapp.com",
+        projectId: "intube-ba578",
+        storageBucket: "intube-ba578.firebasestorage.app",
+        messagingSenderId: "862455398504",
+        appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+        measurementId: "G-944K8C4VM8"
+    };
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
     const params = new URLSearchParams(window.location.search);
-    const videoId = params.get('id'); // Ye document ID hai
+    const videoId = params.get('id'); 
 
-    // Load Video
-    document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoId}`;
-    document.getElementById('videoTitle').innerText = decodeURIComponent(params.get('title'));
-
-    // Like Function
-    function likeVideo() {
-        const docRef = db.collection("videos").doc(videoId);
-        docRef.update({ likes: firebase.firestore.FieldValue.increment(1) });
+    // 1. Video Play karna
+    if(videoId) {
+        document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoId}`;
+        document.getElementById('videoTitle').innerText = decodeURIComponent(params.get('title'));
     }
 
-    // Comment Post
+    // 2. Like System
+    function likeVideo() {
+        if(!videoId) return;
+        db.collection("videos").doc(videoId).update({ 
+            likes: firebase.firestore.FieldValue.increment(1) 
+        });
+    }
+
+    // 3. Comment Post System
     function postComment() {
-        if(!auth.currentUser) return alert("Login karo pehle!");
+        if(!auth.currentUser) return alert("Comment karne ke liye Login karein!");
         const text = document.getElementById('commentInput').value;
+        if(!text) return;
+        
         db.collection("videos").doc(videoId).collection("comments").add({
-            user: auth.currentUser.displayName,
+            user: auth.currentUser.displayName || "Anonymous",
             text: text,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById('commentInput').value = "";
     }
 
-    // Load Comments Real-time
-    db.collection("videos").doc(videoId).collection("comments").orderBy("createdAt", "desc")
-    .onSnapshot(snap => {
-        let html = "";
-        snap.forEach(doc => {
-            html += `<div class="comment-item"><b>${doc.data().user}:</b> ${doc.data().text}</div>`;
+    // 4. Real-time updates (Like count aur Comments)
+    if(videoId) {
+        // Like count
+        db.collection("videos").doc(videoId).onSnapshot(doc => {
+            if(doc.exists) document.getElementById('likeCount').innerText = doc.data().likes || 0;
         });
-        document.getElementById('commentList').innerHTML = html;
-    });
 
-    // Real-time Like Count
-    db.collection("videos").doc(videoId).onSnapshot(doc => {
-        document.getElementById('likeCount').innerText = doc.data().likes || 0;
-    });
+        // Comments list
+        db.collection("videos").doc(videoId).collection("comments").orderBy("createdAt", "desc")
+        .onSnapshot(snap => {
+            let html = "";
+            snap.forEach(doc => {
+                html += `<div class="comment-item"><span class="comment-user">${doc.data().user}:</span> ${doc.data().text}</div>`;
+            });
+            document.getElementById('commentList').innerHTML = html;
+        });
+    }
 </script>
 </body>
 </html>
