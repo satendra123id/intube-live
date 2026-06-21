@@ -2,125 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The New Tips - Official Player</title>
+    <title>Player - Intube</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: Roboto, Arial, sans-serif; margin: 0; background: #fff; }
+        body { font-family: Roboto; margin: 0; background: #fff; }
         .video-container { width: 100%; aspect-ratio: 16/9; background: #000; }
-        .details { padding: 15px; }
-        .title { font-size: 18px; font-weight: bold; color: #0f0f0f; margin: 0 0 10px 0; }
-        .stats { color: #606060; font-size: 14px; margin-bottom: 15px; }
-        .actions { display: flex; gap: 8px; border-bottom: 1px solid #ddd; padding-bottom: 15px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .btn { cursor: pointer; padding: 8px 14px; background: #f2f2f2; border-radius: 20px; border: none; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-        .sub-btn { background: #0f0f0f; color: #fff; }
-        .comment-section { margin-top: 20px; }
-        #commentInput { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .info { padding: 15px; }
+        .title { font-size: 18px; font-weight: bold; margin: 0; }
+        .actions { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .action-btn { cursor: pointer; font-size: 14px; font-weight: 500; }
+        .comments { padding: 15px; }
+        input { width: 80%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .comment-item { margin-bottom: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <video id="videoPlayer" class="video-container" controls autoplay playsinline></video>
-    
-    <div class="details">
-        <h1 id="titleDisplay" class="title">Loading...</h1>
-        <p id="viewCount" class="stats">0 views</p>
-        
-        <div class="actions">
-            <button class="btn" onclick="toggleLike()">👍 <span id="likeCount">0</span></button>
-            <button class="btn" onclick="alert('Dislike feature coming soon!')">👎 Dislike</button>
-            <button class="btn" onclick="copyLink()">🔗 Share</button>
-            <button class="btn" onclick="alert('Saved to Library!')">💾 Save</button>
-            <button class="btn" onclick="downloadVideo()">⬇️ Download</button>
-            <button class="btn sub-btn" onclick="toggleSubscribe()">Subscribe <span id="subCount">0</span></button>
-        </div>
+<div class="video-container">
+    <video id="videoPlayer" width="100%" height="100%" controls autoplay></video>
+</div>
 
-        <div class="comment-section">
-            <input type="text" id="commentInput" placeholder="Add a comment...">
-            <button onclick="postComment()" class="btn">Post</button>
-        </div>
+<div class="info">
+    <h2 class="title" id="videoTitle">Loading...</h2>
+    <div class="actions">
+        <span class="action-btn" onclick="likeVideo()">👍 <span id="likeCount">0</span></span>
+        <span class="action-btn" onclick="subscribe()">🔔 Subscribe</span>
     </div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
-            authDomain: "intube-ba578.firebaseapp.com",
-            projectId: "intube-ba578",
-            storageBucket: "intube-ba578.firebasestorage.app",
-            messagingSenderId: "862455398504",
-            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
-            measurementId: "G-944K8C4VM8"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+<div class="comments">
+    <h3>Comments</h3>
+    <input type="text" id="commentInput" placeholder="Add a comment...">
+    <button onclick="postComment()">Post</button>
+    <div id="commentList" style="margin-top: 15px;"></div>
+</div>
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileId = urlParams.get('id');
-        const videoTitle = urlParams.get('title');
+<script>
+    const firebaseConfig = { /* Apna Config Yahan Dalen */ };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-        document.getElementById('titleDisplay').innerText = videoTitle || "Video";
-        document.getElementById('videoPlayer').src = 'https://intube-backend.onrender.com/stream/' + fileId;
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get('id'); // Ye document ID hai
 
-        // View logic
-        if (!localStorage.getItem('viewed_' + fileId)) {
-            db.collection("videos").where("fileId", "==", fileId).get().then(snap => {
-                snap.forEach(doc => doc.ref.update({ views: firebase.firestore.FieldValue.increment(1) }));
-            });
-            localStorage.setItem('viewed_' + fileId, 'true');
-        }
+    // Load Video
+    document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoId}`;
+    document.getElementById('videoTitle').innerText = decodeURIComponent(params.get('title'));
 
-        // Real-time listener
-        db.collection("videos").where("fileId", "==", fileId).onSnapshot(snap => {
-            snap.forEach(doc => {
-                document.getElementById('viewCount').innerText = doc.data().views + " views";
-                document.getElementById('likeCount').innerText = doc.data().likes || 0;
-            });
+    // Like Function
+    function likeVideo() {
+        const docRef = db.collection("videos").doc(videoId);
+        docRef.update({ likes: firebase.firestore.FieldValue.increment(1) });
+    }
+
+    // Comment Post
+    function postComment() {
+        if(!auth.currentUser) return alert("Login karo pehle!");
+        const text = document.getElementById('commentInput').value;
+        db.collection("videos").doc(videoId).collection("comments").add({
+            user: auth.currentUser.displayName,
+            text: text,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+        document.getElementById('commentInput').value = "";
+    }
 
-        db.collection("channel_info").doc("myChannel").onSnapshot(doc => {
-            if(doc.exists) document.getElementById('subCount').innerText = doc.data().subscribers;
+    // Load Comments Real-time
+    db.collection("videos").doc(videoId).collection("comments").orderBy("createdAt", "desc")
+    .onSnapshot(snap => {
+        let html = "";
+        snap.forEach(doc => {
+            html += `<div class="comment-item"><b>${doc.data().user}:</b> ${doc.data().text}</div>`;
         });
+        document.getElementById('commentList').innerHTML = html;
+    });
 
-        function toggleLike() {
-            let liked = localStorage.getItem('liked_' + fileId);
-            db.collection("videos").where("fileId", "==", fileId).get().then(snap => {
-                snap.forEach(doc => {
-                    let inc = liked ? -1 : 1;
-                    doc.ref.update({ likes: firebase.firestore.FieldValue.increment(inc) });
-                    liked ? localStorage.removeItem('liked_' + fileId) : localStorage.setItem('liked_' + fileId, 'true');
-                });
-            });
-        }
-
-        function toggleSubscribe() {
-            db.collection("channel_info").doc("myChannel").update({
-                subscribers: firebase.firestore.FieldValue.increment(1)
-            });
-        }
-
-        function copyLink() {
-            navigator.clipboard.writeText(window.location.href);
-            alert("Link copied!");
-        }
-
-        function downloadVideo() {
-            const link = document.createElement('a');
-            link.href = document.getElementById('videoPlayer').src;
-            link.download = 'video.mp4';
-            link.click();
-        }
-
-        function postComment() {
-            let text = document.getElementById('commentInput').value;
-            if(!text) return;
-            db.collection("videos").where("fileId", "==", fileId).get().then(snap => {
-                snap.forEach(doc => {
-                    doc.ref.collection("comments").add({ text: text, timestamp: new Date() });
-                    document.getElementById('commentInput').value = "";
-                });
-            });
-        }
-    </script>
+    // Real-time Like Count
+    db.collection("videos").doc(videoId).onSnapshot(doc => {
+        document.getElementById('likeCount').innerText = doc.data().likes || 0;
+    });
+</script>
 </body>
 </html>
