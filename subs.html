@@ -1,40 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Subscriptions</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscriptions - Intube | the new tips</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f9f9f9; margin: 0; padding-bottom: 70px; }
+        
+        /* Header */
+        .header { padding: 15px; background: white; border-bottom: 1px solid #e5e5e5; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between;}
+        .header h2 { margin: 0; font-size: 20px; color: #0f0f0f; }
+        
+        .feed-container { padding: 15px; }
+        
+        /* Video Card Styling */
+        .video-card { margin-bottom: 15px; background: white; cursor: pointer; padding-bottom: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden;}
+        .thumbnail { width: 100%; aspect-ratio: 16/9; background-color: #111; display: flex; justify-content: center; align-items: center; }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .video-info { display: flex; gap: 12px; padding: 12px 15px; }
+        .channel-avatar { width: 36px; height: 36px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; }
+        .channel-avatar img { width: 100%; height: 100%; object-fit: cover;}
+        
+        .video-details { flex-grow: 1; }
+        .video-title { font-size: 15px; font-weight: 500; margin: 0 0 5px 0; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .channel-name { font-size: 13px; color: #606060; margin: 0; }
+        
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e5e5e5; z-index: 1000; }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; text-decoration: none; font-size: 20px;}
+        .nav-item small { display: block; font-size: 10px; margin-top: 3px; font-weight: 400;}
+        .nav-item.active { font-weight: 700; }
+        .nav-item.active b { font-size: 22px; }
+        .add-icon { font-size: 26px; font-weight: 400;}
+    </style>
 </head>
 <body>
-    <h2>Subscriptions Feed</h2>
-    <div id="subsFeed">Loading...</div>
+
+    <div class="header">
+        <h2>Subscriptions</h2>
+        <div style="font-size: 22px;">🔔</div>
+    </div>
+
+    <div class="feed-container" id="subsFeed">
+        <p style="text-align: center; padding: 50px; color: #606060;">Loading your feed...</p>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item">🏠<small>Home</small></a>
+        <a href="shorts.html" class="nav-item">⚡<small>Shorts</small></a>
+        <a href="studio.html" class="nav-item add-icon">➕</a>
+        <a href="subs.html" class="nav-item active"><b>🔔</b><small>Subs</small></a>
+        <a href="profile.html" class="nav-item">👤<small>You</small></a>
+    </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0", authDomain: "intube-ba578.firebaseapp.com", projectId: "intube-ba578", storageBucket: "intube-ba578.firebasestorage.app", messagingSenderId: "862455398504", appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd" };
+        // Aapka Firebase Config aur Tokens
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+            measurementId: "G-944K8C4VM8"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if(!user) return window.location.href = "login.html";
+        auth.onAuthStateChanged(async (user) => {
+            const feed = document.getElementById('subsFeed');
 
-            const subsSnap = await db.collection("users").doc(user.uid).collection("subscriptions").get();
-            const creators = subsSnap.docs.map(doc => doc.id);
+            if (!user) {
+                feed.innerHTML = "<p style='text-align:center; padding:50px;'>Please <a href='login.html' style='color:#065fd4;'>Login</a> to see your subscriptions.</p>";
+                return;
+            }
 
-            if(creators.length > 0) {
+            try {
+                // 1. Fetch kiye gaye subscriptions nikalna
+                const subsSnap = await db.collection("users").doc(user.uid).collection("subscriptions").get();
+                const creators = subsSnap.docs.map(doc => doc.id);
+
+                if (creators.length === 0) {
+                    feed.innerHTML = "<p style='text-align:center; padding:50px; color:#606060;'>Aapne abhi tak kisi channel ko subscribe nahi kiya hai.</p>";
+                    return;
+                }
+
+                // 2. Un channels ki videos fetch karna
                 db.collection("videos").where("uploaderId", "in", creators).orderBy("uploadedAt", "desc").onSnapshot(snap => {
-                    let html = "";
-                    snap.forEach(d => {
-                        let v = d.data();
-                        html += `<div onclick="window.location='player.html?id=${d.id}&title=${encodeURIComponent(v.title)}'" style="padding:15px; border-bottom:1px solid #ddd;">
-                                    <h3>${v.title}</h3>
-                                    <p>Creator: ${v.channelName}</p>
-                                 </div>`;
+                    feed.innerHTML = "";
+                    
+                    if(snap.empty) {
+                        feed.innerHTML = "<p style='text-align:center; padding:50px; color:#606060;'>Aapke subscribed channels ne koi nayi video upload nahi ki hai.</p>";
+                        return;
+                    }
+
+                    snap.forEach(doc => {
+                        let video = doc.data();
+                        let time = video.uploadedAt ? new Date(video.uploadedAt.toMillis()).toLocaleDateString() : 'Fresh Upload';
+                        
+                        // Avatar logic
+                        let avatarHtml = video.channelAvatar ? `<img src="${video.channelAvatar}">` : `<span>${(video.channelName || 'T').charAt(0).toUpperCase()}</span>`;
+
+                        // Video Card UI
+                        let cardHtml = `
+                            <div class="video-card" onclick="window.location.href='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}&uploaderId=${video.uploaderId}'">
+                                <div class="thumbnail">
+                                    <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.src='https://via.placeholder.com/320x180?text=Video';">
+                                </div>
+                                <div class="video-info">
+                                    <div class="channel-avatar">${avatarHtml}</div>
+                                    <div class="video-details">
+                                        <h3 class="video-title">${video.title}</h3>
+                                        <p class="channel-name">${video.channelName || 'the new tips'} • ${video.views || 0} views • ${time}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        feed.innerHTML += cardHtml;
                     });
-                    document.getElementById('subsFeed').innerHTML = html;
                 });
-            } else {
-                document.getElementById('subsFeed').innerText = "Abhi koi subscription nahi hai.";
+            } catch (error) {
+                console.error("Error fetching subscriptions: ", error);
+                feed.innerHTML = "<p style='text-align:center; color:red;'>Data load karne me technical error aayi hai.</p>";
             }
         });
     </script>
