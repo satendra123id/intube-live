@@ -3,26 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - the new tips</title>
+    <title>Login - Intube</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { font-family: 'Roboto', sans-serif; background: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         
-        .login-box { background: white; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 350px; width: 90%; }
-        .logo svg { width: 50px; height: 50px; fill: red; margin-bottom: 15px; }
-        .login-box h2 { margin: 0 0 10px 0; font-size: 22px; color: #0f0f0f; }
-        .login-box p { color: #606060; font-size: 14px; margin-bottom: 30px; }
+        .login-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
+        .logo { font-size: 24px; font-weight: 700; color: #ff0000; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .logo svg { fill: red; width: 30px; height: 30px; }
         
-        /* Google Button Style */
-        .google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; border: 1px solid #ddd; padding: 12px; border-radius: 25px; cursor: pointer; font-size: 15px; font-weight: 500; transition: background 0.3s; }
-        .google-btn:hover { background: #f2f2f2; }
-        .google-btn img { width: 20px; height: 20px; }
+        h2 { margin: 0 0 20px 0; font-size: 18px; color: #333; }
         
-        .status { margin-top: 15px; font-size: 13px; color: #065fd4; font-weight: 500; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none;}
+        input:focus { border-color: #065fd4; }
+
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; margin-bottom: 10px; transition: 0.2s;}
+        .btn-primary { background: #065fd4; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-secondary { background: #fff; color: #065fd4; border: 1px solid #065fd4; }
+        .btn-secondary:hover { background: #f2f8ff; }
+        
+        .divider { display: flex; align-items: center; text-align: center; margin: 15px 0; color: #888; font-size: 12px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #eee; }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
+
+        .google-btn { background: #fff; color: #333; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .google-btn:hover { background: #f9f9f9; }
+        .google-btn img { width: 18px; height: 18px; }
+
+        .error-msg { color: red; font-size: 13px; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -30,72 +43,116 @@
     <div class="login-box">
         <div class="logo">
             <svg viewBox="0 0 24 24"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M10,15.464V8.536L16,12L10,15.464z"/></svg>
+            Intube
         </div>
-        <h2>Sign in to the new tips</h2>
-        <p>Login with Google to upload videos and manage your account.</p>
+        <h2>Sign in to continue</h2>
+
+        <p class="error-msg" id="errorMsg"></p>
+
+        <input type="email" id="emailInput" placeholder="Email address" required>
+        <input type="password" id="passInput" placeholder="Password" required>
         
-        <button class="google-btn" onclick="signInWithGoogle()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
-            Continue with Google
+        <button class="btn btn-primary" onclick="loginWithEmail()">Login</button>
+        <button class="btn btn-secondary" onclick="signUpWithEmail()">Create New Account</button>
+
+        <div class="divider">OR</div>
+
+        <button class="btn google-btn" onclick="loginWithGoogle()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
+            Sign in with Google (Web Only)
         </button>
-        
-        <div class="status" id="loginStatus"></div>
     </div>
 
     <script>
+        // Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
             projectId: "intube-ba578",
             storageBucket: "intube-ba578.firebasestorage.app",
             messagingSenderId: "862455398504",
-            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
-            measurementId: "G-944K8C4VM8"
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // Agar pehle se login hai toh seedha Home (index.html) par bhej do
-                window.location.href = "index.html";
-            }
-        });
+        // Check if redirect is pending
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect') || 'index.html';
 
-        function signInWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            const statusDiv = document.getElementById('loginStatus');
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMsg');
+            errDiv.style.display = 'block';
+            errDiv.innerText = msg;
+        }
+
+        // 1. Email Login (APP KE LIYE PERFECT)
+        function loginWithEmail() {
+            const email = document.getElementById('emailInput').value;
+            const pass = document.getElementById('passInput').value;
             
-            statusDiv.innerText = "Connecting to Google...";
+            if(!email || !pass) return showError("Please enter Email and Password.");
 
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    statusDiv.innerText = "Setting up your Account...";
-                    
-                    // Database mein Channel/User details save kar rahe hain
-                    db.collection("users").doc(user.uid).set({
-                        channelName: user.displayName,
-                        email: user.email,
-                        profilePic: user.photoURL,
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true }).then(() => {
-                        statusDiv.style.color = "green";
-                        statusDiv.innerText = "Login Successful! Redirecting...";
-                        
-                        setTimeout(() => {
-                            window.location.href = "index.html"; // Login hone ke baad Home page par redirect
-                        }, 1000);
+            auth.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    window.location.href = redirectUrl;
+                })
+                .catch((error) => {
+                    showError(error.message);
+                });
+        }
+
+        // 2. Email Sign Up (Naya Account Banane Ke Liye)
+        function signUpWithEmail() {
+            const email = document.getElementById('emailInput').value;
+            const pass = document.getElementById('passInput').value;
+            
+            if(!email || !pass) return showError("Please enter Email and Password to register.");
+            if(pass.length < 6) return showError("Password must be at least 6 characters.");
+
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    // Save user profile in DB
+                    db.collection("users").doc(userCredential.user.uid).set({
+                        name: email.split('@')[0], // Extract name from email
+                        email: email,
+                        subscribers: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        window.location.href = redirectUrl;
                     });
                 })
                 .catch((error) => {
-                    console.error(error);
-                    statusDiv.style.color = "red";
-                    statusDiv.innerText = "Login Failed: " + error.message;
+                    showError(error.message);
                 });
         }
+
+        // 3. Google Login (Ye Web/Browser me chalega)
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    db.collection("users").doc(result.user.uid).set({
+                        name: result.user.displayName,
+                        email: result.user.email,
+                        photo: result.user.photoURL,
+                        subscribers: 0 // Optional default value
+                    }, { merge: true }).then(() => {
+                        window.location.href = redirectUrl;
+                    });
+                })
+                .catch((error) => {
+                    showError("Google Login blocked in App. Please use Email/Password.");
+                });
+        }
+
+        // Agar user pehle se login hai toh seedha home par bhejo
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.location.href = redirectUrl;
+            }
+        });
     </script>
 </body>
 </html>
