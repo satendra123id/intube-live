@@ -47,7 +47,7 @@
         .comment-user { font-weight: 500; font-size: 13px; color: #0f0f0f; margin-right: 8px;}
         .comment-text { font-size: 14px; color: #0f0f0f; margin: 4px 0 0 0; line-height: 1.4; }
 
-        /* YouTube jaisa "Up Next" Section */
+        /* Up Next Section */
         .suggested-section { background: #fff; margin-top: 10px; padding-top: 10px; }
         .suggested-header { font-size: 16px; font-weight: 500; padding: 5px 15px 15px 15px; margin: 0; color: #0f0f0f; }
         .suggested-card { display: flex; gap: 12px; padding: 0 15px 15px 15px; cursor: pointer; }
@@ -61,7 +61,7 @@
 <body>
 
     <div class="fixed-player">
-        <video id="videoPlayer" controls autoplay playsinline></video>
+        <video id="videoPlayer" controls autoplay playsinline onerror="this.style.background='#000';"></video>
     </div>
 
     <div class="content-info">
@@ -130,7 +130,7 @@
     </div>
 
     <script>
-        // Firebase Config
+        // Exact Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
@@ -152,38 +152,59 @@
         let currentUploaderId = null; 
 
         if (videoFileId) {
+            // 1. Setup Video Player Source
             document.getElementById('videoPlayer').src = `https://intube-backend.onrender.com/stream/${videoFileId}`;
             document.getElementById('videoTitle').innerText = videoTitleParam;
             document.title = videoTitleParam;
 
-            // Fetch current video details
-            db.collection("videos").where("fileId", "in", [videoFileId, Number(videoFileId), String(videoFileId)]).onSnapshot((snap) => {
-                if (!snap.empty) {
-                    const doc = snap.docs[0];
-                    videoDocId = doc.id; 
-                    const video = doc.data();
-                    currentUploaderId = video.uploaderId;
+            // 2. Safe Firebase Query (Crash-Proof Logic)
+            try {
+                let searchArray = [String(videoFileId)];
+                if (!isNaN(Number(videoFileId))) { searchArray.push(Number(videoFileId)); }
 
-                    document.getElementById('likeCount').innerText = video.likes || 0;
-                    document.getElementById('viewCount').innerText = video.views || 0;
-                    document.getElementById('channelName').innerText = video.channelName || "the new tips";
+                db.collection("videos").where("fileId", "in", searchArray).onSnapshot((snap) => {
+                    if (!snap.empty) {
+                        const doc = snap.docs[0];
+                        videoDocId = doc.id; 
+                        const video = doc.data();
+                        currentUploaderId = video.uploaderId;
 
-                    if(video.channelAvatar){
-                        document.getElementById('channelAvatar').innerHTML = `<img src="${video.channelAvatar}">`;
+                        document.getElementById('likeCount').innerText = video.likes || 0;
+                        document.getElementById('viewCount').innerText = video.views || 0;
+                        document.getElementById('channelName').innerText = video.channelName || "the new tips";
+
+                        if(video.channelAvatar){
+                            document.getElementById('channelAvatar').innerHTML = `<img src="${video.channelAvatar}">`;
+                        }
+
+                        if(currentUploaderId){
+                            db.collection("users").doc(currentUploaderId).onSnapshot(uDoc => {
+                                if(uDoc.exists) document.getElementById('channelSubs').innerText = uDoc.data().subscribers || 0;
+                            });
+                            checkSubStatus();
+                        }
+                        
+                        // Metadata load hone ke baad comments layen
+                        loadCommentsRealtime();
+                        checkLikeDislikeStatus(); 
+                    } else {
+                        document.getElementById('commentList').innerHTML = "<p style='text-align: center; color: #606060;'>Details not found in database.</p>";
                     }
+                }, (error) => {
+                    console.error("Firebase Error: ", error);
+                });
+            } catch (error) {
+                console.error("Query Error: ", error);
+            }
 
-                    if(currentUploaderId){
-                        db.collection("users").doc(currentUploaderId).onSnapshot(uDoc => {
-                            if(uDoc.exists) document.getElementById('channelSubs').innerText = uDoc.data().subscribers || 0;
-                        });
-                        checkSubStatus();
-                    }
-                    loadCommentsRealtime();
-                    checkLikeDislikeStatus(); // Check initial Like/Dislike state
-                }
-            });
-
-            loadSuggestedVideos();
+            // 3. Load Suggested Videos Independently (Page freeze nahi hoga)
+            try {
+                loadSuggestedVideos();
+            } catch (error) {
+                console.error("Suggested Video Error: ", error);
+            }
+        } else {
+            document.getElementById('videoTitle').innerText = "Video Not Found";
         }
 
         // --- SUGGESTED VIDEOS ---
@@ -214,11 +235,12 @@
                 });
                 
                 if(list.innerHTML === "") {
-                    list.innerHTML = "<p style='text-align: center; color: #606060; padding: 20px;'>No more videos to suggest right now.</p>";
+                    list.innerHTML = "<p style='text-align: center; color: #606060; padding: 20px;'>No more videos to suggest.</p>";
                 }
             });
         }
 
+        // --- OTHER FEATURES ---
         function checkLogin() {
             if (!auth.currentUser) {
                 alert("Please login to use this feature!");
@@ -227,7 +249,6 @@
             return true;
         }
 
-        // --- NEW LOGIC: LIKE AND DISLIKE TOGGLE ---
         function checkLikeDislikeStatus() {
             if (auth.currentUser && videoDocId) {
                 const uid = auth.currentUser.uid;
@@ -250,18 +271,12 @@
 
             likeRef.get().then(doc => {
                 if (doc.exists) {
-                    // Agar pehle se like hai, toh unlike karo
                     likeRef.delete();
                     db.collection("videos").doc(videoDocId).update({ likes: firebase.firestore.FieldValue.increment(-1) });
                 } else {
-                    // Like karo
                     likeRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
                     db.collection("videos").doc(videoDocId).update({ likes: firebase.firestore.FieldValue.increment(1) });
-                    
-                    // Agar dislike tha toh usko hatao
-                    dislikeRef.get().then(dDoc => {
-                        if (dDoc.exists) dislikeRef.delete();
-                    });
+                    dislikeRef.get().then(dDoc => { if (dDoc.exists) dislikeRef.delete(); });
                 }
             });
         }
@@ -274,13 +289,9 @@
 
             dislikeRef.get().then(doc => {
                 if (doc.exists) {
-                    // Agar pehle se dislike hai, toh hatao
                     dislikeRef.delete();
                 } else {
-                    // Dislike karo
                     dislikeRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                    
-                    // Agar like tha toh usko hatao
                     likeRef.get().then(lDoc => {
                         if (lDoc.exists) {
                             likeRef.delete();
@@ -290,7 +301,6 @@
                 }
             });
         }
-        // --- END LIKE/DISLIKE LOGIC ---
 
         function shareVideo() {
             if (navigator.share) {
@@ -354,15 +364,4 @@
         function loadCommentsRealtime() {
             if(!videoDocId) return;
             db.collection("videos").doc(videoDocId).collection("comments").orderBy("createdAt", "desc").onSnapshot(snap => {
-                const list = document.getElementById('commentList');
-                document.getElementById('commentCount').innerText = snap.size;
-                list.innerHTML = "";
-
-                if(snap.empty) {
-                    list.innerHTML = "<p style='text-align:center; color:#606060;'>No comments yet.</p>";
-                    return;
-                }
-
-                snap.forEach(doc => {
-                    const c = doc.data();
-                    let avatar = c.userAvatar ? `<img src="${c.userAvatar}" style="width:100%;height:100%;object-fit:cover;">` : `<span>${(c.userName || 'U').charAt(0).toUpperCa
+                const list = document
