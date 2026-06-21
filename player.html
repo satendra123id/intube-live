@@ -2,27 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Real-Time Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intube - Player</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* CSS Wahi purani rahegi, bas logic update hoga */
-        body { font-family: sans-serif; }
-        .video-player { width: 100%; }
-        .stats-btn { cursor: pointer; padding: 10px; background: #eee; margin: 5px; border-radius: 20px; border: none; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; background-color: #fff; }
+        .video-player { width: 100%; background: #000; aspect-ratio: 16/9; }
+        .details { padding: 15px; }
+        .stats-btn { cursor: pointer; padding: 10px 20px; background: #f2f2f2; border-radius: 20px; border: none; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <video id="videoPlayer" class="video-player" controls autoplay playsinline></video>
-    <h1 id="titleDisplay">Loading...</h1>
-    <p id="viewCount">Loading views...</p>
     
-    <button class="stats-btn" onclick="updateLike()">👍 <span id="likeCount">0</span></button>
-    <button class="stats-btn" onclick="subscribe()">Subscribe</button>
+    <div class="details">
+        <h1 id="titleDisplay">Loading...</h1>
+        <p id="viewCount">Loading views...</p>
+        
+        <button class="stats-btn" onclick="updateLike()">👍 <span id="likeCount">0</span> Likes</button>
+        <button class="stats-btn" onclick="subscribe()">Subscribe</button>
+    </div>
 
     <script>
-        const firebaseConfig = { /* Wahi puraana config yahan rahega */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+            measurementId: "G-944K8C4VM8"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -33,22 +45,27 @@
         document.getElementById('titleDisplay').innerText = videoTitle;
         document.getElementById('videoPlayer').src = 'https://intube-backend.onrender.com/stream/' + fileId;
 
-        // 1. VIEW COUNTER (Page khulte hi view +1)
+        // Smart Query: Ab ID hardcode karne ki zaroorat nahi
         const videoRef = db.collection("videos").where("fileId", "==", fileId);
+
+        // View Counter logic
         videoRef.get().then((snapshot) => {
             snapshot.forEach((doc) => {
                 db.collection("videos").doc(doc.id).update({
                     views: firebase.firestore.FieldValue.increment(1)
                 });
-                // Real-time update dikhane ke liye
+                
+                // Real-time listener
                 db.collection("videos").doc(doc.id).onSnapshot((doc) => {
-                    document.getElementById('viewCount').innerText = doc.data().views + " views";
-                    document.getElementById('likeCount').innerText = doc.data().likes || 0;
+                    if(doc.exists) {
+                        document.getElementById('viewCount').innerText = doc.data().views + " views";
+                        document.getElementById('likeCount').innerText = doc.data().likes || 0;
+                    }
                 });
             });
         });
 
-        // 2. LIKE LOGIC
+        // Smart Like Logic
         function updateLike() {
             videoRef.get().then((snapshot) => {
                 snapshot.forEach((doc) => {
