@@ -2,104 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intube - Player</title>
+    <title>Real-Time Player</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #ffffff; color: #0f0f0f; }
-        
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: white; border-bottom: 1px solid #e5e5e5;}
-        .logo { font-size: 20px; font-weight: 700; color: #ff0000; cursor: pointer; }
-        
-        /* Video Player Area */
-        .player-container { width: 100%; background-color: #000; display: flex; justify-content: center; align-items: center; }
-        /* Yeh player 16:9 aur 9x16 dono video size ko achhe se support karega */
-        video { width: 100%; max-height: 85vh; outline: none; }
-        
-        /* Video Details */
-        .video-details { padding: 15px; }
-        .video-title { font-size: 20px; font-weight: 700; margin: 0 0 10px 0; line-height: 1.3; }
-        .video-stats { font-size: 14px; color: #606060; margin-bottom: 15px; }
-        
-        /* Channel Info Row */
-        .channel-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #e5e5e5; }
-        .channel-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; }
-        .channel-text h3 { margin: 0; font-size: 16px; font-weight: 500; }
-        .channel-text p { margin: 2px 0 0 0; font-size: 12px; color: #606060; }
-        .subscribe-btn { background-color: #0f0f0f; color: white; border: none; padding: 10px 16px; font-weight: 500; border-radius: 20px; font-size: 14px; cursor: pointer; }
-        
-        /* Action Buttons */
-        .action-row { display: flex; gap: 15px; padding: 15px 0; overflow-x: auto; border-bottom: 1px solid #e5e5e5; }
-        .action-btn { background: #f2f2f2; border: none; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 14px; cursor: pointer; white-space: nowrap; }
-        
-        .comments-section { padding: 15px; }
+        /* CSS Wahi purani rahegi, bas logic update hoga */
+        body { font-family: sans-serif; }
+        .video-player { width: 100%; }
+        .stats-btn { cursor: pointer; padding: 10px; background: #eee; margin: 5px; border-radius: 20px; border: none; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="logo" onclick="window.location.href='home.html'">Intube</div>
-        <div class="avatar" style="width:30px; height:30px; font-size:14px;">T</div>
-    </div>
-
-    <div class="player-container">
-        <video id="videoPlayer" controls autoplay playsinline>
-            <source src="" type="video/mp4">
-            Aapka browser video tag support nahi karta.
-        </video>
-    </div>
-
-    <div class="video-details">
-        <h1 class="video-title" id="displayTitle">Loading...</h1>
-        <div class="video-stats">1.2K views • Just now</div>
-        
-        <div class="channel-row">
-            <div class="channel-info">
-                <div class="avatar">T</div>
-                <div class="channel-text">
-                    <h3>the new tips</h3>
-                    <p>800 subscribers</p>
-                </div>
-            </div>
-            <button class="subscribe-btn">Subscribe</button>
-        </div>
-
-        <div class="action-row">
-            <button class="action-btn">👍 150</button>
-            <button class="action-btn">👎 Dislike</button>
-            <button class="action-btn">💬 Share</button>
-            <button class="action-btn">⬇️ Download</button>
-        </div>
-
-        <div class="comments-section">
-            <h4 style="margin: 0 0 10px 0;">Comments</h4>
-            <div style="display:flex; gap:10px; align-items: center;">
-                <div class="avatar" style="width:24px; height:24px; font-size:12px;">U</div>
-                <p style="font-size: 14px; color: #606060; margin: 0;">Add a comment...</p>
-            </div>
-        </div>
-    </div>
+    <video id="videoPlayer" class="video-player" controls autoplay playsinline></video>
+    <h1 id="titleDisplay">Loading...</h1>
+    <p id="viewCount">Loading views...</p>
+    
+    <button class="stats-btn" onclick="updateLike()">👍 <span id="likeCount">0</span></button>
+    <button class="stats-btn" onclick="subscribe()">Subscribe</button>
 
     <script>
-        // URL se Video ki ID aur Title nikalna
+        const firebaseConfig = { /* Wahi puraana config yahan rahega */ };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         const urlParams = new URLSearchParams(window.location.search);
         const fileId = urlParams.get('id');
         const videoTitle = urlParams.get('title');
 
-        if (videoTitle) {
-            document.getElementById('displayTitle').innerText = videoTitle;
-        }
+        document.getElementById('titleDisplay').innerText = videoTitle;
+        document.getElementById('videoPlayer').src = 'https://intube-backend.onrender.com/stream/' + fileId;
 
-        if (fileId) {
-            // Render Server se video stream karne ka link
-            const renderStreamUrl = 'https://intube-backend.onrender.com/stream/' + fileId;
-            document.getElementById('videoPlayer').src = renderStreamUrl;
-        } else {
-            document.getElementById('displayTitle').innerText = "Video Not Found";
+        // 1. VIEW COUNTER (Page khulte hi view +1)
+        const videoRef = db.collection("videos").where("fileId", "==", fileId);
+        videoRef.get().then((snapshot) => {
+            snapshot.forEach((doc) => {
+                db.collection("videos").doc(doc.id).update({
+                    views: firebase.firestore.FieldValue.increment(1)
+                });
+                // Real-time update dikhane ke liye
+                db.collection("videos").doc(doc.id).onSnapshot((doc) => {
+                    document.getElementById('viewCount').innerText = doc.data().views + " views";
+                    document.getElementById('likeCount').innerText = doc.data().likes || 0;
+                });
+            });
+        });
+
+        // 2. LIKE LOGIC
+        function updateLike() {
+            videoRef.get().then((snapshot) => {
+                snapshot.forEach((doc) => {
+                    db.collection("videos").doc(doc.id).update({
+                        likes: firebase.firestore.FieldValue.increment(1)
+                    });
+                });
+            });
         }
     </script>
 </body>
 </html>
-
