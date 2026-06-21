@@ -6,23 +6,31 @@
     <title>Intube - Home</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #ffffff; color: #0f0f0f; padding-bottom: 60px; }
+        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f9f9f9; color: #0f0f0f; padding-bottom: 70px; } /* Bottom padding added nav bar ke liye */
+        
+        /* Header & Categories */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; position: sticky; top: 0; background: white; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .logo { font-size: 20px; font-weight: 700; color: #ff0000; display: flex; align-items: center; gap: 5px; }
-        .categories { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: white; white-space: nowrap; }
+        .categories { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: white; white-space: nowrap; border-bottom: 1px solid #e5e5e5; }
         .categories::-webkit-scrollbar { display: none; }
-        .category-chip { background: #f2f2f2; padding: 6px 12px; border-radius: 8px; font-size: 14px; border: 1px solid transparent; }
+        .category-chip { background: #f2f2f2; padding: 6px 12px; border-radius: 8px; font-size: 14px; border: 1px solid transparent; cursor: pointer; }
         .category-chip.active { background: #0f0f0f; color: white; }
-        .video-card { margin-bottom: 20px; cursor: pointer; }
-        .thumbnail { width: 100%; aspect-ratio: 16/9; background-color: #111; position: relative; display: flex; justify-content: center; align-items: center; color: white; font-weight: 500;}
-        .video-info { display: flex; gap: 12px; padding: 12px 15px; }
-        .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold;}
+        
+        /* Video Card Styling */
+        .video-card { margin-bottom: 15px; background: white; cursor: pointer; padding-bottom: 10px; }
+        .thumbnail { width: 100%; aspect-ratio: 16/9; background-color: #111; position: relative; display: flex; justify-content: center; align-items: center; color: white; font-weight: 500; overflow: hidden; }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .video-info { display: flex; gap: 12px; padding: 12px 15px 0 15px; }
+        .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: #065fd4; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; }
+        .channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .video-details { flex-grow: 1; }
-        .video-title { font-size: 16px; font-weight: 500; margin: 0 0 4px 0; line-height: 1.3;}
+        .video-title { font-size: 16px; font-weight: 500; margin: 0 0 4px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .channel-name { font-size: 12px; color: #606060; margin: 0; }
-        .bottom-nav { display: flex; justify-content: space-around; align-items: center; position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #e5e5e5; padding: 10px 0; }
-        .nav-item { font-size: 12px; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; gap: 4px;}
-        .nav-add { width: 40px; height: 40px; border: 1px solid #0f0f0f; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; }
+        
+        /* Unified Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+        .nav-item { text-align: center; cursor: pointer; color: #0f0f0f; display: flex; flex-direction: column; align-items: center; }
+        .nav-item small { display: block; font-size: 10px; margin-top: 2px; }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -35,7 +43,9 @@
             <svg viewBox="0 0 24 24" style="fill:red; width: 28px; height: 28px;"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M10,15.464V8.536L16,12L10,15.464z"/></svg>
             Intube
         </div>
-        <div class="channel-avatar" style="width:30px; height:30px; font-size:12px;">T</div>
+        <div class="channel-avatar">
+            <img src="my-studio-pic.jpg" onerror="this.style.display='none'; this.parentNode.innerText='T';">
+        </div>
     </div>
 
     <div class="categories">
@@ -43,7 +53,6 @@
         <div class="category-chip">Computer security</div>
         <div class="category-chip">APIs</div>
         <div class="category-chip">Ethical Hacking</div>
-        <div class="category-chip">Monetization</div>
     </div>
 
     <div id="videoFeed">
@@ -51,15 +60,14 @@
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item"><b>Home</b></div>
-        <div class="nav-item">Shorts</div>
-        <div class="nav-add" onclick="window.location.href='index.html'">+</div>
-        <div class="nav-item">Subs</div>
-        <div class="nav-item">You</div>
+        <div class="nav-item" onclick="window.location='index.html'"><b>🏠</b><small><b>Home</b></small></div>
+        <div class="nav-item" onclick="window.location='shorts.html'">⚡<small>Shorts</small></div>
+        <div class="nav-item" onclick="window.location='studio.html'" style="font-size: 24px;">➕</div>
+        <div class="nav-item" onclick="window.location='subs.html'">🔔<small>Subs</small></div>
+        <div class="nav-item" onclick="window.location='profile.html'">👤<small>You</small></div>
     </div>
 
     <script>
-        // Aapka original Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
             authDomain: "intube-ba578.firebaseapp.com",
@@ -72,10 +80,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Database se data real-time load karna
+        // Database se data fetch karna
         db.collection("videos").orderBy("uploadedAt", "desc").onSnapshot((querySnapshot) => {
             const feed = document.getElementById("videoFeed");
-            feed.innerHTML = ""; // Purana text clear karein
+            feed.innerHTML = ""; 
 
             if(querySnapshot.empty) {
                 feed.innerHTML = "<p style='text-align:center; padding:40px; color:#606060;'>No videos found. Click + to upload!</p>";
@@ -85,18 +93,23 @@
             querySnapshot.forEach((doc) => {
                 const video = doc.data();
                 
-                // NAYA CODE: Click karne par player.html par bheje aur ID sath le jaye
+                // Card create karna
                 const cardHtml = `
                     <div class="video-card" onclick="window.location.href='player.html?id=${video.fileId}&title=${encodeURIComponent(video.title)}'">
                         <div class="thumbnail">
-                            <span>▶ Play Video</span>
+                            <img src="https://img.youtube.com/vi/${video.fileId}/mqdefault.jpg" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: #111;">
+                                ▶ Play Video
+                            </div>
                         </div>
                         <div class="video-info">
-                            <div class="channel-avatar">T</div>
+                            <div class="channel-avatar">
+                                <img src="my-studio-pic.jpg" onerror="this.style.display='none'; this.parentNode.innerText='T';">
+                            </div>
                             <div class="video-details">
                                 <h3 class="video-title">${video.title}</h3>
                                 <p class="channel-name">the new tips</p>
-                                <p style="font-size:12px; color:#606060; margin:2px 0 0 0;">${video.views || 0} views</p>
+                                <p style="font-size:12px; color:#606060; margin:2px 0 0 0;">${video.views || 0} views • Fresh Upload</p>
                             </div>
                         </div>
                     </div>
@@ -105,15 +118,8 @@
             });
         }, (error) => {
             console.error("Error fetching videos: ", error);
-            document.getElementById("videoFeed").innerHTML = "<p style='text-align:center; color:red;'>Database se connect nahi ho pa raha. Firebase rules check karein.</p>";
+            document.getElementById("videoFeed").innerHTML = "<p style='text-align:center; color:red;'>Database error. Check connection.</p>";
         });
     </script>
-    <div style="position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000;">
-    <div onclick="window.location='index.html'" style="text-align: center; cursor: pointer;">🏠<br><small>Home</small></div>
-    <div onclick="window.location='shorts.html'" style="text-align: center; cursor: pointer;">⚡<br><small>Shorts</small></div>
-    <div onclick="window.location='studio.html'" style="text-align: center; cursor: pointer; font-size: 24px;">➕</div>
-    <div onclick="window.location='subs.html'" style="text-align: center; cursor: pointer;">🔔<br><small>Subs</small></div>
-    <div onclick="window.location='profile.html'" style="text-align: center; cursor: pointer;">👤<br><small>You</small></div>
-    </div>
 </body>
 </html>
