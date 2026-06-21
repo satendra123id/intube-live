@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - the new tips</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: Roboto, Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+        .header { background: #d32f2f; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        
+        .admin-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .admin-section h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        
+        .btn-danger { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-danger:hover { background: #b71c1c; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🛠️ Platform Control Center</h1>
+        <p>Master Admin: Manage Videos & Channels</p>
+    </div>
+
+    <div class="admin-section">
+        <h2>Content Moderation (All Videos)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Video Title</th>
+                    <th>Uploaded At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="adminVideoList">
+                <tr><td colspan="3">Loading all videos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin-section">
+        <h2>Channel Management (All Users)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Channel Name</th>
+                    <th>Email ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="adminUserList">
+                <tr><td colspan="3">Loading all users...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Fetch All Videos
+        function loadAllVideos() {
+            db.collection("videos").onSnapshot(snap => {
+                const list = document.getElementById("adminVideoList");
+                list.innerHTML = "";
+                if(snap.empty) { list.innerHTML = "<tr><td colspan='3'>No videos found.</td></tr>"; return; }
+                
+                snap.forEach(doc => {
+                    let v = doc.data();
+                    list.innerHTML += `
+                        <tr>
+                            <td><b>${v.title}</b><br><small style="color:gray;">ID: ${doc.id}</small></td>
+                            <td>System Time</td>
+                            <td>
+                                <button class="btn-danger" onclick="deleteVideo('${doc.id}')">Delete & Strike</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        // 2. Fetch All Users
+        function loadAllUsers() {
+            db.collection("users").onSnapshot(snap => {
+                const list = document.getElementById("adminUserList");
+                list.innerHTML = "";
+                if(snap.empty) { list.innerHTML = "<tr><td colspan='3'>No users found.</td></tr>"; return; }
+                
+                snap.forEach(doc => {
+                    let u = doc.data();
+                    list.innerHTML += `
+                        <tr>
+                            <td><b>${u.channelName || 'Unknown'}</b></td>
+                            <td>${u.email || 'N/A'}</td>
+                            <td>
+                                <button class="btn-danger" onclick="deleteChannel('${doc.id}')">Delete Channel</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        // Action Functions
+        function deleteVideo(docId) {
+            if(confirm("Are you sure? Ye video platform se hamesha ke liye delete ho jayegi.")) {
+                db.collection("videos").doc(docId).delete().then(() => {
+                    alert("Video deleted successfully! Strike given.");
+                });
+            }
+        }
+
+        function deleteChannel(userId) {
+            if(confirm("DANGER! Kya aap sach me is channel ko delete karna chahte hain?")) {
+                db.collection("users").doc(userId).delete().then(() => {
+                    alert("Channel deleted and user banned.");
+                });
+            }
+        }
+
+        // Initialize Load
+        loadAllVideos();
+        loadAllUsers();
+    </script>
+</body>
+</html>
