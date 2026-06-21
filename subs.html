@@ -1,45 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subscriptions - The New Tips</title>
-    <style>
-        body { font-family: Roboto, Arial; margin: 0; background: #f9f9f9; padding-bottom: 80px; }
-        .header { background: #fff; padding: 15px; font-weight: bold; font-size: 20px; border-bottom: 1px solid #ddd; }
-        .sub-card { background: #fff; margin: 10px; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .sub-info { font-weight: 600; }
-    </style>
+    <title>Subscriptions</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+    <h2>Subscriptions Feed</h2>
+    <div id="subsFeed">Loading...</div>
 
-    <div class="header">Subscriptions</div>
-    
-    <div id="subList">
-        <div class="sub-card">
-            <div style="width: 50px; height: 50px; background: #ddd; border-radius: 50%;"></div>
-            <div class="sub-info">
-                <div>The New Tips</div>
-                <div style="font-size: 12px; color: #606060;">Active Channel</div>
-            </div>
-        </div>
-    </div>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0", authDomain: "intube-ba578.firebaseapp.com", projectId: "intube-ba578", storageBucket: "intube-ba578.firebasestorage.app", messagingSenderId: "862455398504", appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    <div style="position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000;">
-        <div onclick="window.location='index.html'" style="text-align: center; cursor: pointer;">🏠<br><small>Home</small></div>
-        <div onclick="window.location='shorts.html'" style="text-align: center; cursor: pointer;">⚡<br><small>Shorts</small></div>
-        <div onclick="window.location='studio.html'" style="text-align: center; cursor: pointer; font-size: 24px;">➕</div>
-        <div onclick="window.location='subs.html'" style="text-align: center; cursor: pointer;">🔔<br><small>Subs</small></div>
-        <div onclick="window.location='profile.html'" style="text-align: center; cursor: pointer;">👤<br><small>You</small></div>
-    </div>
-<div style="position: fixed; bottom: 0; width: 100%; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000;">
-    <div onclick="window.location='index.html'" style="text-align: center; cursor: pointer;">🏠<br><small>Home</small></div>
-    <div onclick="window.location='shorts.html'" style="text-align: center; cursor: pointer;">⚡<br><small>Shorts</small></div>
-    <div onclick="window.location='studio.html'" style="text-align: center; cursor: pointer; font-size: 24px;">➕</div>
-    <div onclick="window.location='subs.html'" style="text-align: center; cursor: pointer;">🔔<br><small>Subs</small></div>
-    <div onclick="window.location='profile.html'" style="text-align: center; cursor: pointer;">👤<br><small>You</small></div>
-</div>
-  
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if(!user) return window.location.href = "login.html";
+
+            const subsSnap = await db.collection("users").doc(user.uid).collection("subscriptions").get();
+            const creators = subsSnap.docs.map(doc => doc.id);
+
+            if(creators.length > 0) {
+                db.collection("videos").where("uploaderId", "in", creators).orderBy("uploadedAt", "desc").onSnapshot(snap => {
+                    let html = "";
+                    snap.forEach(d => {
+                        let v = d.data();
+                        html += `<div onclick="window.location='player.html?id=${d.id}&title=${encodeURIComponent(v.title)}'" style="padding:15px; border-bottom:1px solid #ddd;">
+                                    <h3>${v.title}</h3>
+                                    <p>Creator: ${v.channelName}</p>
+                                 </div>`;
+                    });
+                    document.getElementById('subsFeed').innerHTML = html;
+                });
+            } else {
+                document.getElementById('subsFeed').innerText = "Abhi koi subscription nahi hai.";
+            }
+        });
+    </script>
 </body>
 </html>
-
