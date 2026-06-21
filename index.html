@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>the new tips - Studio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f9f9f9; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .studio-modal { background: #ffffff; width: 100%; max-width: 800px; border-radius: 8px; box-shadow: 0px 10px 30px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid #e5e5e5; }
+        .modal-header h2 { margin: 0; font-size: 20px; font-weight: 500; color: #0f0f0f; }
+        .upload-area { padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .upload-icon { width: 100px; height: 100px; background: #f9f9f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .upload-icon svg { width: 50px; height: 50px; fill: #909090; }
+        .upload-text h3 { margin: 0 0 8px 0; font-size: 15px; color: #0f0f0f; }
+        .upload-text p { margin: 0 0 24px 0; font-size: 13px; color: #606060; }
+        .select-btn { background-color: #065fd4; color: white; border: none; padding: 10px 24px; font-size: 14px; font-weight: 500; border-radius: 2px; cursor: pointer; }
+        input[type="file"] { display: none; }
+        .details-form { display: none; padding: 24px; width: 100%; box-sizing: border-box; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 12px; color: #606060; margin-bottom: 5px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 4px; box-sizing: border-box;}
+        .action-buttons { display: flex; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid #e5e5e5; }
+        .publish-btn { background-color: #065fd4; color: white; border: none; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; display: none; }
+        .status-bar { margin-top: 15px; font-size: 13px; font-weight: 500; text-align: center; }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <div class="studio-modal">
+        <div class="modal-header">
+            <h2>the new tips - Upload videos</h2>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            </div>
+            <div class="upload-text">
+                <h3>Select a video file to upload</h3>
+                <p>9x16 Shorts aur 16:9 dono size support hote hain.</p>
+            </div>
+            <input type="file" id="videoInput" accept="video/*" onchange="showDetailsForm()">
+            <button class="select-btn" onclick="document.getElementById('videoInput').click()">Select File</button>
+        </div>
+
+        <div class="details-form" id="detailsForm">
+            <div class="input-group">
+                <label>Title (required)</label>
+                <input type="text" id="videoTitle">
+            </div>
+            <div class="input-group">
+                <label>Description</label>
+                <textarea id="videoDescription"></textarea>
+            </div>
+            <div class="status-bar" id="statusMessage"></div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="publish-btn" id="publishBtn" onclick="uploadVideo()">PUBLISH</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnXb8ka21ajr_HSGHtfhFoIwqOGBdhi_0",
+            authDomain: "intube-ba578.firebaseapp.com",
+            projectId: "intube-ba578",
+            storageBucket: "intube-ba578.firebasestorage.app",
+            messagingSenderId: "862455398504",
+            appId: "1:862455398504:web:bc76d18bf7670bb5aa3bdd",
+            measurementId: "G-944K8C4VM8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function showDetailsForm() {
+            const videoFile = document.getElementById('videoInput').files[0];
+            if (videoFile) {
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('detailsForm').style.display = 'block';
+                document.getElementById('publishBtn').style.display = 'block';
+                document.getElementById('videoTitle').value = videoFile.name.split('.')[0];
+            }
+        }
+
+        async function uploadVideo() {
+            const videoFile = document.getElementById('videoInput').files[0];
+            const title = document.getElementById('videoTitle').value;
+            const description = document.getElementById('videoDescription').value;
+            const statusText = document.getElementById('statusMessage');
+
+            if (!title) return alert("Title zaroori hai!");
+
+            statusText.style.color = "#065fd4";
+            statusText.innerText = "Step 1: Server par video bhej rahe hain... Wait karein...";
+            document.getElementById('publishBtn').disabled = true;
+
+            const formData = new FormData();
+            formData.append('video', videoFile);
+
+            try {
+                // Sahi Render Link yahan set kar diya gaya hai
+                const renderUrl = 'https://intube-backend.onrender.com/upload-video';
+                
+                const response = await fetch(renderUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if(data.success) {
+                    statusText.innerText = "Step 2: Database mein entry save kar rahe hain...";
+                    
+                    await db.collection("videos").add({
+                        title: title,
+                        description: description,
+                        fileId: data.fileId,
+                        views: 0,
+                        uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    statusText.style.color = "green";
+                    statusText.innerText = "Success! Video automatic Home page par live ho gayi.";
+                    document.getElementById('publishBtn').style.display = 'none';
+                } else {
+                    statusText.style.color = "red";
+                    statusText.innerText = "Upload failed. Please try again.";
+                    document.getElementById('publishBtn').disabled = false;
+                }
+            } catch (error) {
+                console.error(error);
+                statusText.style.color = "red";
+                statusText.innerText = "Server connection fail. Render link check karein.";
+                document.getElementById('publishBtn').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
